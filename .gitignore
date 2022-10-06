@@ -27,6 +27,17 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+
+/data_labeling
+/datasets
+/results/*
+/checkpoints/
+/test_imgs/
+/tensorboard/
+/data_augmentation/raw_data/
+/demo_images/
+
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
