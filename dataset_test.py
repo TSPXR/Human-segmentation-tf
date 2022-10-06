@@ -17,9 +17,8 @@ IMAGE_SIZE = (640, 360)
 
 if __name__ == "__main__":
     tf.config.run_functions_eagerly(True)
-    tf.data.experimental.enable_debug_mode()
-    # human_segmentation
-    # full_semantic
+    # tf.data.experimental.enable_debug_mode()
+    
     train_dataset_config = DatasetGenerator(DATASET_DIR, IMAGE_SIZE, batch_size=1, dataset_name='human_segmentation')
     train_data = train_dataset_config.get_testData(train_dataset_config.train_data)
 

@@ -2,7 +2,7 @@ import cv2
 import argparse
 import tensorflow as tf
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
-
+import matplotlib.pyplot as plt
 import numpy as np
 from models.model_builder import ModelBuilder
 import timeit
@@ -21,7 +21,7 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='/1005/_1005_r640x360_b16_e_90_lr0.005_adam-binary_test-multi-gpu_best_loss.h5')
+                    help="Saved model weights directory", default='/1006/_1006_new-sigmoid-test_best_loss.h5')
 
 args = parser.parse_args()
 
@@ -55,12 +55,12 @@ if __name__ == '__main__':
     while cv2.waitKey(1) < 0:
         ret, frame = capture.read()
         
-        h, w = args.image_size
-        frame = frame[40: 40+h, 200:200+w]
-        print(frame.shape)
+
+        
         start_t = timeit.default_timer()
         
-        # frame = frame[0:640, 120:120+360]
+        frame = frame[40:40+640, 180:180+360]
+        h, w = frame.shape[:2]
         # print(frame.shape)
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
@@ -78,10 +78,14 @@ if __name__ == '__main__':
         
         FPS = int(1./(terminate_t - start_t ))
 
-        semantic_output = semantic_output[0]
         
-        semantic_output = tf.image.resize(semantic_output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
-        frame *= semantic_output
+        output = output[0]
+        plt.imshow(output)
+        plt.show()
+        output = tf.where(output>0.9, 1., 0.)
+        
+        output = tf.image.resize(output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
+        frame *= output
 
         cv2.putText(frame, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
                         (200, 50, 0), 3, cv2.LINE_AA)

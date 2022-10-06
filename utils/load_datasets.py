@@ -138,28 +138,23 @@ class DatasetGenerator(DataLoadHandler):
                                     method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
         else:
-            if tf.random.uniform([]) > 0.2:
-                img = tf.image.resize_with_crop_or_pad(img, self.image_size[0], self.image_size[1])
-                labels = tf.image.resize_with_crop_or_pad(labels, self.image_size[0], self.image_size[1])
+            scale = tf.random.uniform([], 1.05, 1.3)
 
-            else:
-                scale = tf.random.uniform([], 1.05, 1.3)
+            new_h = self.image_size[0] * scale
+            new_w = self.image_size[1] * scale
 
-                new_h = self.image_size[0] * scale
-                new_w = self.image_size[1] * scale
+            img = tf.image.resize(img, size=(new_h, new_w),
+                                method=tf.image.ResizeMethod.BILINEAR)
+            labels = tf.image.resize(labels, size=(new_h, new_w),
+                                    method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-                img = tf.image.resize(img, size=(new_h, new_w),
-                                    method=tf.image.ResizeMethod.BILINEAR)
-                labels = tf.image.resize(labels, size=(new_h, new_w),
-                                        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+            
+            concat_img = tf.concat([img, labels], axis=-1)
+            concat_img = tf.image.random_crop(
+                concat_img, (self.image_size[0], self.image_size[1], 4))
 
-                
-                concat_img = tf.concat([img, labels], axis=-1)
-                concat_img = tf.image.random_crop(
-                    concat_img, (self.image_size[0], self.image_size[1], 4))
-
-                img = concat_img[:, :, :3]
-                labels = concat_img[:, :, 3:]
+            img = concat_img[:, :, :3]
+            labels = concat_img[:, :, 3:]
 
         return (img, labels)
         
@@ -177,7 +172,7 @@ class DatasetGenerator(DataLoadHandler):
                 img       (tf.Tensor)  : tf.Tensor data (shape=H,W,3)
                 labels    (tf.Tensor)  : tf.Tensor data (shape=H,W,1)
         """
-        if tf.random.uniform([]) > 0.5:
+        if tf.random.uniform([]) > 0.1:
             img = tf.image.random_jpeg_quality(img, 30, 100)
 
         if tf.random.uniform([]) > 0.2:

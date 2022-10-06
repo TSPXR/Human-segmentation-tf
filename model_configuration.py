@@ -157,9 +157,8 @@ class ModelConfiguration(DatasetGenerator):
         """
         self.metric_list = []
 
-        
         mse = tf.keras.metrics.MeanSquaredError()
-        self.miou_name = 'mean_squared_error'
+        self.miou_name = 'main_mean_squared_error'
         self.metric_list.append(mse)
 
 
@@ -179,20 +178,23 @@ class ModelConfiguration(DatasetGenerator):
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES,
                             dataset_name=self.DATASET_NAME, loss_type=self.LOSS_TYPE)
 
-        boundary_loss = BinaryBoundaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
-                            global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
+        # boundary_loss = BinaryBoundaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
+        #                     global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
 
-        auxilary_loss = BinaryAuxiliaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
-                            global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
+        # auxilary_loss = BinaryAuxiliaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
+        #                     global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
 
-        losses = {
-            'main': main_loss,
-            'boundary': boundary_loss,
-            'aux': auxilary_loss
-        }
-        metrics = {
-            'main': self.metric_list[0]
-        }
+        # losses = {
+        #     'main': main_loss,
+        #     'boundary': boundary_loss,
+        #     'aux': auxilary_loss
+        # }
+
+        # metrics = {
+        #     'main': self.metric_list[0]
+        # }
+        losses = main_loss
+        metrics = self.metric_list[0]
 
         self.model.compile(
             optimizer=self.optimizer,

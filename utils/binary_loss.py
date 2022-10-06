@@ -171,6 +171,4 @@ class BinarySegmentationLoss(tf.keras.losses.Loss):
         if self.use_multi_gpu:
             loss = tf.reduce_mean(loss)
 
-        loss *= 2.
-
         return loss
