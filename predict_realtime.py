@@ -21,7 +21,7 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='/1006/_1006_new-sigmoid-test_best_loss.h5')
+                    help="Saved model weights directory", default='/1007/_1007_b16-e50-lr0.001-adam-640x360-no-augment-multiGPU-normalBCE_best_loss.h5')
 
 args = parser.parse_args()
 
@@ -32,7 +32,6 @@ if __name__ == '__main__':
 
     model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
                 planes=32, ppm_planes=96, head_planes=128, augment=False, training=False).build()
-    
 
     # from models.model_zoo.pidnet.pidnet import PIDNet
         
@@ -80,14 +79,13 @@ if __name__ == '__main__':
 
         
         output = output[0]
-        plt.imshow(output)
-        plt.show()
-        output = tf.where(output>0.9, 1., 0.)
+        
+        output = tf.where(output>0.5, 1., 0.)
         
         output = tf.image.resize(output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
         frame *= output
 
-        cv2.putText(frame, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
+        cv2.putText(output, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
                         (200, 50, 0), 3, cv2.LINE_AA)
         cv2.imshow("VideoFrame", frame)
 

@@ -85,8 +85,8 @@ class ModelConfiguration(DatasetGenerator):
                                               monitor='val_loss', save_best_only=True, save_weights_only=True, verbose=1)
         
         checkpoint_val_iou = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_iou.h5',
-                                             monitor='val_' + self.miou_name, save_best_only=True, save_weights_only=True,
-                                             verbose=1, mode='min')
+                                             monitor=self.miou_name, save_best_only=True, save_weights_only=True,
+                                             verbose=1, mode='max')
 
         tensorboard = tf.keras.callbacks.TensorBoard(
             log_dir=self.TENSORBOARD_DIR + 'semantic/' + self.MODEL_PREFIX, write_graph=True, write_images=True)
@@ -155,11 +155,13 @@ class ModelConfiguration(DatasetGenerator):
         """
             Configure metrics for use in training and evaluation.
         """
-        self.metric_list = []
+        self.metric_list = []        
 
-        mse = tf.keras.metrics.MeanSquaredError()
-        self.miou_name = 'main_mean_squared_error'
-        self.metric_list.append(mse)
+        from utils.metrics import MIoU
+        mIoU = MIoU(self.NUM_CLASSES)
+        self.miou_name = 'val_main_m_io_u'
+
+        self.metric_list.append(mIoU)
 
 
     def train(self):
@@ -174,33 +176,32 @@ class ModelConfiguration(DatasetGenerator):
         self.__configuration_metric()
         self.__set_callbacks()
         
-        main_loss = BinarySegmentationLoss(gamma=2.0, from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
+        main_loss = BinarySegmentationLoss(gamma=2.0, from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES,
                             dataset_name=self.DATASET_NAME, loss_type=self.LOSS_TYPE)
 
         # boundary_loss = BinaryBoundaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
         #                     global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
 
-        # auxilary_loss = BinaryAuxiliaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
-        #                     global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
+        auxilary_loss = BinaryAuxiliaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
+                            global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
 
-        # losses = {
-        #     'main': main_loss,
-        #     'boundary': boundary_loss,
-        #     'aux': auxilary_loss
-        # }
+        losses = {
+            'main': main_loss,
+            'aux': auxilary_loss
+        }
 
-        # metrics = {
-        #     'main': self.metric_list[0]
-        # }
-        losses = main_loss
-        metrics = self.metric_list[0]
+        metrics = {
+            'main': self.metric_list[0]
+        }
 
         self.model.compile(
             optimizer=self.optimizer,
             loss=losses,
             metrics=metrics)
+
         self.model.summary()
+
         self.model.fit(self.train_data,
                        validation_data=self.valid_data,
                        steps_per_epoch=self.steps_per_epoch,

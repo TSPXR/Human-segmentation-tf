@@ -100,7 +100,7 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
-        loss = tf.keras.losses.BinaryFocalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+        loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
         
         if self.use_multi_gpu:
             loss = tf.reduce_mean(loss)
@@ -112,7 +112,7 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
 @tf.keras.utils.register_keras_serializable()
 class BinarySegmentationLoss(tf.keras.losses.Loss):
     def __init__(self, gamma, class_weight: Optional[Any] = None,
-                 from_logits: bool = False, use_multi_gpu: bool = False,
+                 from_logits: bool = True, use_multi_gpu: bool = False,
                  global_batch_size: int = 16, num_classes: int = 3,
                  dataset_name: str = 'cityscapes',
                  loss_type: str = 'focal',
@@ -158,17 +158,98 @@ class BinarySegmentationLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
+        loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
+
+        return loss
+
+
+    def sparse_categorical_cross_entropy(self, y_true, y_pred):
+        loss = losses.SparseCategoricalCrossentropy(
+            from_logits=True, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+             
+        if self.use_multi_gpu:
+            loss = tf.reduce_mean(loss)
         
-        binary_loss = self.binary_focal_loss(y_true=y_true, y_pred=y_pred)
+        return loss
+        
+    
+    def sparse_categorical_focal_loss(self, y_true, y_pred, gamma, *,
+                                  class_weight: Optional[Any] = None,
+                                  from_logits: bool = False, axis: int = -1,
+                                  ) -> tf.Tensor:
+        # Process focusing parameter
+        gamma = tf.convert_to_tensor(gamma, dtype=tf.dtypes.float32)
+        gamma_rank = gamma.shape.rank
+        scalar_gamma = gamma_rank == 0
 
-        return binary_loss
+        # Process class weight
+        if class_weight is not None:
+            class_weight = tf.convert_to_tensor(class_weight,
+                                                dtype=tf.dtypes.float32)
 
+        # Process prediction tensor
+        y_pred = tf.convert_to_tensor(y_pred)
+        y_pred_rank = y_pred.shape.rank
+        if y_pred_rank is not None:
+            axis %= y_pred_rank
+            if axis != y_pred_rank - 1:
+                # Put channel axis last for sparse_softmax_cross_entropy_with_logits
+                perm = list(itertools.chain(range(axis),
+                                            range(axis + 1, y_pred_rank), [axis]))
+                y_pred = tf.transpose(y_pred, perm=perm)
+        elif axis != -1:
+            raise ValueError(
+                f'Cannot compute sparse categorical focal loss with axis={axis} on '
+                'a prediction tensor with statically unknown rank.')
+        y_pred_shape = tf.shape(y_pred)
 
-    def binary_focal_loss(self, y_true, y_pred):
+        # Process ground truth tensor
+        y_true = tf.dtypes.cast(y_true, dtype=tf.dtypes.int64)
+        y_true_rank = y_true.shape.rank
 
-        loss = tf.keras.losses.BinaryFocalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+        if y_true_rank is None:
+            raise NotImplementedError('Sparse categorical focal loss not supported '
+                                    'for target/label tensors of unknown rank')
+
+        reshape_needed = (y_true_rank is not None and y_pred_rank is not None and
+                        y_pred_rank != y_true_rank + 1)
+        if reshape_needed:
+            y_true = tf.reshape(y_true, [-1])
+            y_pred = tf.reshape(y_pred, [-1, y_pred_shape[-1]])
+
+        if from_logits:
+            logits = y_pred
+            probs = tf.nn.softmax(y_pred, axis=-1)
+        else:
+            probs = y_pred
+            logits = tf.math.log(tf.clip_by_value(y_pred, _EPSILON, 1 - _EPSILON))
+        
+        print(y_true)
+        print(y_pred)
+        xent_loss = losses.SparseCategoricalCrossentropy(
+            from_logits=True,
+            reduction=self.loss_reduction)(y_true=y_true, y_pred=logits)
+
+        y_true_rank = y_true.shape.rank
+        probs = tf.gather(probs, y_true, axis=-1, batch_dims=y_true_rank)
+
+        if not scalar_gamma:
+            gamma = tf.gather(gamma, y_true, axis=0, batch_dims=y_true_rank)
+        focal_modulation = (1 - probs) ** gamma
+
+        loss = focal_modulation * xent_loss
 
         if self.use_multi_gpu:
             loss = tf.reduce_mean(loss)
+
+        if class_weight is not None:
+            class_weight = tf.gather(class_weight, y_true, axis=0,
+                                    batch_dims=y_true_rank)
+            loss *= class_weight
+
+        # if reshape_needed:
+        #     print('y_pred_shape', y_pred_shape)
+        #     print('loss_shape', loss)
+        #     loss = tf.reshape(loss, y_pred_shape[:-1])
 
         return loss

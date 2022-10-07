@@ -25,11 +25,8 @@ sample_dir_idx = 0
 image_idx = 0
 
 for samples in tqdm(raw_list, total=len(raw_list)):
-
-    
     sample_dir_idx += 1
 
-    
     rgb_dir_name = samples
     mask_dir_name = rgb_dir_name.replace('rgb', 'gt')
 

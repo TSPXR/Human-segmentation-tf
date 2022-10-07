@@ -69,6 +69,7 @@ class ModelBuilder(object):
             model = PIDNet(input_shape=(*self.image_size, 3), m=2, n=3, num_classes=self.num_classes,
                            planes=32, ppm_planes=96, head_planes=128, augment=augment_mode, training=training).build()
         
+        
         # Initialize weights and set attenuation when set to training mode is activate.
         if training:
             # Set weight initializers
@@ -103,6 +104,8 @@ class ModelBuilder(object):
                     if hasattr(layer, 'bias_regularizer') and layer.use_bias:
                         layer.add_loss(lambda layer=layer: regularizers.L2(
                             self.weight_decay)(layer.bias))
+
+        
         return model
 
 if __name__ == '__main__':

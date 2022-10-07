@@ -11,7 +11,7 @@ import tensorflow_addons as tfa
 import math
 import random
 
-name = 'human_segmentation_dataset_5_dance'
+name = 'human_fashion_2_dataset'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/rgb/'.format(name))
@@ -41,7 +41,7 @@ class ImageAugmentationLoader():
         os.makedirs(self.OUT_MASK_PATH, exist_ok=True)
         
 
-        self.rgb_list = glob.glob(os.path.join(self.RGB_PATH+'*.png'))
+        self.rgb_list = glob.glob(os.path.join(self.RGB_PATH+'*.jpg'))
         self.rgb_list = natsort.natsorted(self.rgb_list,reverse=True)
 
         self.mask_list = glob.glob(os.path.join(self.MASK_PATH+'*.png'))
@@ -83,30 +83,31 @@ if __name__ == '__main__':
 
     # for idx in range(len(rgb_list)):
     for idx in tqdm(range(len(rgb_list)), total=len(rgb_list)):
-
+        # print(idx)
         original_rgb = cv2.imread(rgb_list[idx])
         original_mask = cv2.imread(mask_list[idx])
-        # original_mask = np.where(original_mask==(90, 6 ,69), 0, original_mask)
+        if name == 'human_fahsion_1_dataset':
+            original_mask = np.where(original_mask==(90, 6 ,69), 0, 255)
         
-
+        kernel_size_row = 3
+        kernel_size_col = 3
+        kernel = np.ones((kernel_size_row, kernel_size_col), np.uint8)
+        original_mask = cv2.dilate(original_mask, kernel, iterations=1)  #// make dilation image
+        
         original_rgb_shape = original_rgb.shape[:2]
         original_mask_shape = original_mask.shape[:2]
 
         if original_rgb_shape != original_mask_shape:
-            
-            
             h, w = original_rgb_shape
             original_mask = cv2.resize(original_mask, (w, h), interpolation=cv2.INTER_NEAREST)
-        
 
-
+        original_mask = original_mask.astype(np.uint8)
         original_mask = cv2.cvtColor(original_mask, cv2.COLOR_BGR2GRAY)
         original_mask = np.where(original_mask >= 1, 1, 0).astype(np.uint8)
 
         contours, _ = cv2.findContours(
                 original_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         
-
         # 컨투어 전체 병합
         contour_list = []
         len_contour = len(contours)
@@ -116,13 +117,12 @@ if __name__ == '__main__':
             contour_list.append(img_contour)  
         original_mask = sum(contour_list)
         
-        kernel_size_row = 3
-        kernel_size_col = 3
-        kernel = np.ones((kernel_size_row, kernel_size_col), np.uint8)
-        original_mask = cv2.dilate(original_mask, kernel, iterations=1)  #// make dilation image
+        
+        
+            
 
         
-
+        original_mask = original_mask.astype(np.uint8)
         # 병합된 컨투어 마스크에서 외부 노이즈 제거
         compose_contours, _ = cv2.findContours(
                 original_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -157,4 +157,4 @@ if __name__ == '__main__':
             cv2.imshow('test', concat_img)
             cv2.waitKey(0)
 
-        image_loader.save_images(rgb=original_rgb, mask=original_mask, prefix='human_fashion_2_dataset_{0}'.format(idx))
+        image_loader.save_images(rgb=original_rgb, mask=original_mask, prefix='{0}_{1}'.format(name, idx))

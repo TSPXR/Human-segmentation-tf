@@ -79,8 +79,13 @@ class DatasetGenerator(DataLoadHandler):
                 sample       (dict)  : Dataset loaded through tfds.load().
         """
         img = tf.cast(sample[self.train_key], tf.float32)
-        labels = tf.cast(sample[self.label_key], dtype=tf.float32)
+        labels = tf.cast(sample[self.label_key], dtype=tf.int32)
         
+        img = tf.image.resize(img, size=(self.image_size[0], self.image_size[1]),
+                              method=tf.image.ResizeMethod.BILINEAR)
+        labels = tf.image.resize(labels, size=(self.image_size[0], self.image_size[1]),
+                                 method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+                                 
         original_img = img
 
         if self.dataset_name == 'human_segmentation':
@@ -260,7 +265,7 @@ class DatasetGenerator(DataLoadHandler):
             Returns:
                 train_data    (tf.data.Dataset)  : Apply data augmentation, batch, and shuffling
         """    
-        train_data = train_data.shuffle(256)
+        train_data = train_data.shuffle(256, reshuffle_each_iteration=True)
         train_data = train_data.map(self.preprocess, num_parallel_calls=AUTO)
         train_data = train_data.map(self.augmentation, num_parallel_calls=AUTO)
         train_data = train_data.padded_batch(self.batch_size)
