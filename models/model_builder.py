@@ -16,7 +16,7 @@ class ModelBuilder(object):
         self.image_size = image_size
         self.num_classes = num_classes
         self.use_weight_decay = use_weight_decay
-        self.weight_decay = weight_decay\
+        self.weight_decay = weight_decay
 
 
         # self.kernel_initializer = VarianceScaling(scale=2.0, mode="fan_out",
@@ -68,7 +68,12 @@ class ModelBuilder(object):
                 
             model = PIDNet(input_shape=(*self.image_size, 3), m=2, n=3, num_classes=self.num_classes,
                            planes=32, ppm_planes=96, head_planes=128, augment=augment_mode, training=training).build()
-        
+
+        elif model_name == 'ddrnet':
+
+            from models.model_zoo.DDRNet import ddrnet_23_slim
+
+            model = ddrnet_23_slim(input_shape=(*self.image_size, 3), num_classes=self.num_classes, augment=False)
         
         # Initialize weights and set attenuation when set to training mode is activate.
         if training:

@@ -101,6 +101,22 @@ if __name__ == '__main__':
                 mask = mask[:,:,3]
                 
                 mask = np.where(mask>1. , 255, 0)
+                mask = np.expand_dims(mask, axis=-1)
+
+
+                # if args.test:
+                    
+                # test_mask = np.concatenate([mask, mask, mask], axis=-1)
+                # masked_image = img * (test_mask / 255)
+                # masked_image = masked_image.astype(np.uint8)
+                # img = img.astype(np.uint8)
+                # test_mask = test_mask.astype(np.uint8)
+                # masked_image = masked_image.astype(np.uint8)
+                # concat_img = cv2.hconcat([img, test_mask, masked_image]) # original_rgb * (original_mask/255)
+                # cv2.imshow('test', concat_img)
+                # cv2.waitKey(0)
+
+
 
                 image_loader.save_images(rgb=img, mask=mask, prefix='matting_human_dataset_{0}'.format(sample_idx))
 

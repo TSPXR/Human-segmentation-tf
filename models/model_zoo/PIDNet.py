@@ -137,12 +137,12 @@ class PIDNet(object):
             x = tf.image.resize(spp, size=(height_output, width_output), method='bilinear')
             dfm = Bag(x_, x, x_d, self.planes * 4)  # dfm
 
-        
+        x_ = segmentation_head(dfm, self.head_planes, self.num_classes, 8, prefix='main')  # final_layer
 
         # Prediction Head
         if self.augment:
             # aux loss
-            seghead_p = segmentation_head(temp_p, self.head_planes, 1, 8, prefix='aux')
+            seghead_p = segmentation_head(temp_p, self.head_planes, self.num_classes, 8, prefix='aux')
 
             # boundary loss
             seghead_d = segmentation_head(temp_d, self.planes, 1, 8, prefix='boundary')
@@ -150,13 +150,9 @@ class PIDNet(object):
 
             return models.Model(inputs=x_in, outputs=model_outputs)
         else:
-            
-            x_ = segmentation_head(dfm, self.head_planes, self.num_classes, 8, prefix='main', use_sigmoid=False)  # final_layer
-            binary_x = segmentation_head(dfm, self.head_planes, 1, 8, prefix='aux', use_sigmoid=True)
-            model_outputs = [x_, binary_x]
-            # if self.training == False:
-            #     # x_ = tf.math.argmax(x_, axis=-1)
-            return models.Model(inputs=x_in, outputs=model_outputs)
+            if self.training == False:
+                x_ = tf.math.argmax(x_, axis=-1)
+            return models.Model(inputs=x_in, outputs=x_)
 
 
 if __name__ == '__main__':

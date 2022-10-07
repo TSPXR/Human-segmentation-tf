@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size",      type=int,
                     help="Evaluation batch size", default=1)
 parser.add_argument("--num_classes",     type=int,
-                    help="Model num classes", default=1)
+                    help="Model num classes", default=2)
 parser.add_argument("--image_size",      type=tuple,
                     help="Model image size (input resolution H,W)", default=(640, 360))
 parser.add_argument("--dataset_dir",     type=str,
@@ -23,7 +23,7 @@ parser.add_argument("--dataset_name",     type=str,
 parser.add_argument("--checkpoint_dir",  type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_path",     type=str,
-                    help="Saved model weights directory", default='1007/_1007_b16-e100-lr0.001-adam-640x360-no-augment-multiGPU_best_loss.h5')
+                    help="Saved model weights directory", default='1007/_1007_b16-e50-lr0.005-adam-640x360-no-augment-multiGPU-onlyCE-ddrnet-onlymatting_best_loss.h5')
 
 # Prediction results visualize options
 parser.add_argument("--visualize",  help="Whether to image and save inference results", action='store_true')
@@ -48,6 +48,10 @@ if __name__ == '__main__':
     
     model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
                        planes=32, ppm_planes=96, head_planes=128, augment=False, training=False).build()
+
+    model = ModelBuilder(image_size=args.image_size,
+                                  num_classes=args.num_classes, use_weight_decay=False, weight_decay=0)
+    model = model.build_model(model_name='ddrnet', training=False)
     model.load_weights(args.checkpoint_dir + args.weight_path)
     model.summary()
 
@@ -70,12 +74,13 @@ if __name__ == '__main__':
         start = time.process_time()
         prediction = model.predict_on_batch(x)
         duration = (time.process_time() - start)
+        
+        
+        pred = tf.math.argmax(prediction, axis=-1, output_type=tf.int32)
+        pred = tf.expand_dims(pred, axis=-1)
 
-        # Argmax prediction
-        # pred = tf.math.argmax(prediction, axis=-1, output_type=tf.int32)
 
-
-        tf.keras.preprocessing.image.save_img(args.result_dir + str(batch_index)+'.png', prediction[0])
+        tf.keras.preprocessing.image.save_img(args.result_dir + str(batch_index)+'.png', pred[0])
         batch_index += 1
 
         avg_duration += duration

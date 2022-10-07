@@ -3,7 +3,7 @@ from tensorflow.keras import mixed_precision
 from models.model_zoo.pidnet.pidnet import PIDNet
 from models.model_builder import ModelBuilder
 from utils.load_datasets import DatasetGenerator
-from utils.binary_loss import BinaryAuxiliaryLoss, BinaryBoundaryLoss, BinarySegmentationLoss
+from utils.binary_loss import BinaryAuxiliaryLoss, BinaryBoundaryLoss, SemgnetationLoss
 import os
 import tensorflow as tf
 import tensorflow_addons as tfa
@@ -176,7 +176,7 @@ class ModelConfiguration(DatasetGenerator):
         self.__configuration_metric()
         self.__set_callbacks()
         
-        main_loss = BinarySegmentationLoss(gamma=2.0, from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
+        main_loss = SemgnetationLoss(gamma=2.0, from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES,
                             dataset_name=self.DATASET_NAME, loss_type=self.LOSS_TYPE)
 
@@ -186,14 +186,18 @@ class ModelConfiguration(DatasetGenerator):
         auxilary_loss = BinaryAuxiliaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
 
-        losses = {
-            'main': main_loss,
-            'aux': auxilary_loss
-        }
+        # losses = {
+        #     'main': main_loss,
+        #     # 'aux': auxilary_loss
+        # }
 
-        metrics = {
-            'main': self.metric_list[0]
-        }
+        losses = main_loss
+
+        # metrics = {
+        #     'main': self.metric_list[0]
+        # }
+
+        metrics = self.metric_list[0]
 
         self.model.compile(
             optimizer=self.optimizer,

@@ -79,7 +79,7 @@ class DatasetGenerator(DataLoadHandler):
                 sample       (dict)  : Dataset loaded through tfds.load().
         """
         img = tf.cast(sample[self.train_key], tf.float32)
-        labels = tf.cast(sample[self.label_key], dtype=tf.int32)
+        labels = tf.cast(sample[self.label_key], dtype=tf.float32)
         
         img = tf.image.resize(img, size=(self.image_size[0], self.image_size[1]),
                               method=tf.image.ResizeMethod.BILINEAR)
@@ -87,9 +87,8 @@ class DatasetGenerator(DataLoadHandler):
                                  method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
                                  
         original_img = img
-
-        if self.dataset_name == 'human_segmentation':
-            labels = tf.where(labels>=1., 1., 0.)
+        
+        labels = tf.where(labels>=1., 1, 0)
 
         if self.norm_type == 'tf':
             # Normalize the input image to 'tf' style (-1 ~ 1)
@@ -100,6 +99,8 @@ class DatasetGenerator(DataLoadHandler):
         else:
             # Normalize the input image (0 ~ 1)
             img /= 255.
+
+        labels = tf.cast(labels, dtype=tf.int32)
         
         return (img, labels, original_img)
 
@@ -119,6 +120,9 @@ class DatasetGenerator(DataLoadHandler):
         """
         img = tf.cast(sample[self.train_key], dtype=tf.float32)
         labels = tf.cast(sample[self.label_key], dtype=tf.float32)
+
+        # Label normalization (adjust to number of classes to classify)
+        labels = tf.where(labels>=1., 1., 0.)
         
         return (img, labels)
 
@@ -161,6 +165,18 @@ class DatasetGenerator(DataLoadHandler):
             img = concat_img[:, :, :3]
             labels = concat_img[:, :, 3:]
 
+        # Input image normalization
+        if self.norm_type == 'tf':
+            # Normalize the input image to 'tf' style (-1 ~ 1)
+            img = preprocess_input(img, mode='tf')
+        elif self.norm_type == 'torch':
+            # Normalize the input image to 'torch' style (0 ~ 1 with mean, std)
+            img = preprocess_input(img, mode='torch')
+        else:
+            # Normalize the input image (0 ~ 1)
+            img /= 255.
+
+
         return (img, labels)
         
 
@@ -178,7 +194,7 @@ class DatasetGenerator(DataLoadHandler):
                 labels    (tf.Tensor)  : tf.Tensor data (shape=H,W,1)
         """
         if tf.random.uniform([]) > 0.1:
-            img = tf.image.random_jpeg_quality(img, 30, 100)
+            img = tf.image.random_jpeg_quality(img, 50, 100)
 
         if tf.random.uniform([]) > 0.2:
             # Degrees to Radian
@@ -190,11 +206,11 @@ class DatasetGenerator(DataLoadHandler):
             labels = tfa.image.rotate(labels, rand_degree, interpolation='nearest')
 
         if tf.random.uniform([]) > 0.5:
-            img = tf.image.random_saturation(img, 0.9, 3)
+            img = tf.image.random_saturation(img, 0.5, 1.5 )
         if tf.random.uniform([]) > 0.5:
-            img = tf.image.random_brightness(img, 60)
+            img = tf.image.random_brightness(img, max_delta=32. / 255.)
         if tf.random.uniform([]) > 0.5:
-            img = tf.image.random_contrast(img, 0.5, 2)
+            img = tf.image.random_contrast(img, 0.5, 1.5)
         if tf.random.uniform([]) > 0.5:
             img = tf.image.flip_left_right(img)
             labels = tf.image.flip_left_right(labels)
@@ -202,20 +218,8 @@ class DatasetGenerator(DataLoadHandler):
             channels = tf.unstack (img, axis=-1)
             img = tf.stack([channels[2], channels[1], channels[0]], axis=-1)
         
-        # Label normalization (adjust to number of classes to classify)
-        if self.dataset_name == 'human_segmentation':
-            labels = tf.where(labels>=1., 1., 0.)
 
-        # Input image normalization
-        if self.norm_type == 'tf':
-            # Normalize the input image to 'tf' style (-1 ~ 1)
-            img = preprocess_input(img, mode='tf')
-        elif self.norm_type == 'torch':
-            # Normalize the input image to 'torch' style (0 ~ 1 with mean, std)
-            img = preprocess_input(img, mode='torch')
-        else:
-            # Normalize the input image (0 ~ 1)
-            img /= 255.
+        labels = tf.cast(labels, dtype=tf.int32)
 
         return (img, labels)
 
@@ -239,8 +243,8 @@ class DatasetGenerator(DataLoadHandler):
                                  method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
         # Label normalization (adjust to number of classes to classify)
-        if self.dataset_name == 'human_segmentation':
-            labels = tf.where(labels>=1, 1, 0)
+        
+        labels = tf.where(labels>=1, 1, 0)
 
         # Input image normalization
         if self.norm_type == 'tf':
@@ -252,6 +256,8 @@ class DatasetGenerator(DataLoadHandler):
         else:
             # Normalize the input image (0 ~ 1)
             img /= 255.
+        
+        labels = tf.cast(labels, dtype=tf.int32)
 
         return (img, labels)
 

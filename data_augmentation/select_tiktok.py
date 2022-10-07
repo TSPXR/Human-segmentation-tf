@@ -10,7 +10,7 @@ from tqdm import tqdm
 RAW_PATH = './data_augmentation/raw_data/TikTok_dataset/'
 SAVE_RGB_PATH = RAW_PATH + 'rgb/'
 SAVE_MASK_PATH = RAW_PATH + 'mask/'
-SELECT_STEP = 5
+SELECT_STEP = 7
 
 os.makedirs(SAVE_RGB_PATH, exist_ok=True)
 os.makedirs(SAVE_MASK_PATH, exist_ok=True)

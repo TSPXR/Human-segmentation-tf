@@ -110,7 +110,7 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
 
 
 @tf.keras.utils.register_keras_serializable()
-class BinarySegmentationLoss(tf.keras.losses.Loss):
+class SemgnetationLoss(tf.keras.losses.Loss):
     def __init__(self, gamma, class_weight: Optional[Any] = None,
                  from_logits: bool = True, use_multi_gpu: bool = False,
                  global_batch_size: int = 16, num_classes: int = 3,
@@ -158,7 +158,8 @@ class BinarySegmentationLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
-        loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
+        # loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
+        loss = self.sparse_categorical_cross_entropy(y_true=y_true, y_pred=y_pred)
 
         return loss
 
@@ -224,8 +225,6 @@ class BinarySegmentationLoss(tf.keras.losses.Loss):
             probs = y_pred
             logits = tf.math.log(tf.clip_by_value(y_pred, _EPSILON, 1 - _EPSILON))
         
-        print(y_true)
-        print(y_pred)
         xent_loss = losses.SparseCategoricalCrossentropy(
             from_logits=True,
             reduction=self.loss_reduction)(y_true=y_true, y_pred=logits)

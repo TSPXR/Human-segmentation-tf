@@ -9,7 +9,7 @@ bn_mom = 0.1
 Segmentation head
 3*3 -> 1*1 -> rescale
 """
-def segmentation_head(x_in, interplanes, outplanes, scale_factor=None, prefix='layer_name', use_sigmoid=False):
+def segmentation_head(x_in, interplanes, outplanes, scale_factor=None, prefix='layer_name'):
     
     x = layers.BatchNormalization(momentum=bn_mom)(x_in)
     x = layers.Activation("relu")(x)
@@ -18,8 +18,6 @@ def segmentation_head(x_in, interplanes, outplanes, scale_factor=None, prefix='l
     x = layers.BatchNormalization(momentum=bn_mom)(x)
     x = layers.Activation("relu")(x)
     x = layers.Conv2D(outplanes, kernel_size=(1, 1), use_bias=range, padding="valid")(x)  # bias difference
-    if use_sigmoid:
-        x = layers.Activation("sigmoid")(x)
 
     if scale_factor is not None:
         # input_shape = tf.keras.backend.int_shape(x)
