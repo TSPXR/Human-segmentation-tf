@@ -5,11 +5,9 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./data_augmentation/raw_data/bg_img/select/total/')
-# parser.add_argument("--mask_path",     type=str,   help="raw image path", default='./data_augmentation/raw_data/bg_img/select/select_rgb/')
-# parser.add_argument("--obj_mask_path",     type=str,   help="raw image path", default='./data_augmentation/raw_data/obj_mask/')
-# parser.add_argument("--bg_path",     type=str,   help="raw image path", default='./data_augmentation/raw_data/bg_img/select/select_rgb/')
-parser.add_argument("--output_path",     type=str,   help="raw image path", default='./data_augmentation/raw_data/bg_img/save_bg/')
+name = 'tspxr'
+parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/bg_img/{0}/rgb/'.format(name))
+parser.add_argument("--output_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/bg_img/{0}/mask/'.format(name))
 
 args = parser.parse_args()
 
@@ -33,6 +31,6 @@ if __name__ == '__main__':
         zero_mask = np.zeros(rgb_img.shape[:2], dtype=np.uint8)
         zero_mask = np.expand_dims(zero_mask, axis=-1)
 
-        cv2.imwrite(args.output_path + 'rgb/' + 'bg2_image_idx_{0}_'.format(idx) + '_rgb.jpg', rgb_img)
-        cv2.imwrite(args.output_path + 'gt/' + ' bg2_image_idx_{0}_'.format(idx) + '_mask.png', zero_mask)
+        # cv2.imwrite(args.output_path + '{0}_{1}_'.format(name, idx) + '_rgb.jpg', rgb_img)
+        cv2.imwrite(args.output_path + ' {0}_{1}_'.format(name, idx) + '_mask.png', zero_mask)
         # cv2.imwrite(args.obj_mask_path + file_name + '.png', zero_mask)

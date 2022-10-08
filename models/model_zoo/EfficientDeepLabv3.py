@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.layers as layers
 import tensorflow.keras.models as models
-from .efficientDeeplab.efficientnetv2 import EfficientNetV2S
+from .efficientDeeplab.efficientnetv2 import EfficientNetV2B0, EfficientNetV2S
 from .efficientDeeplab.light_deeplabv3 import deepLabV3Plus
 bn_mom = 0.1
 
@@ -36,17 +36,18 @@ class EfficientDeepLabV3(object):
         
     def build(self) -> models.Model:
         
-        base = EfficientNetV2S(input_shape=self.input_shape, num_classes=0)
+        base = EfficientNetV2B0(input_shape=self.input_shape, num_classes=0)
+        base.summary()
         model_input = base.input
         
-        skip_feature = base.get_layer('add_7').output
-        x = base.get_layer('add_34').output
+        skip_feature = base.get_layer('add_1').output
+        x = base.get_layer('add_14').output
 
         # 'add_7' : 80, 45 1/8
         # 'add_34' : 20, 12, 1/32
         
 
-        output = deepLabV3Plus(features=[skip_feature, x], base_channel=256, activation='swish')
+        output = deepLabV3Plus(features=[skip_feature, x], base_channel=128, activation='swish')
 
         model_output = self.classifier(x=output, num_classes=self.num_classes, upper=8, prefix='output')
 
@@ -58,6 +59,6 @@ class EfficientDeepLabV3(object):
 if __name__ == '__main__':
     print('Test EfficientNet model')
 
-    model = EfficientDeepLabV3(input_shape=(640, 360, 3), num_classes=2, augment=False).build()
+    model = EfficientDeepLabV3(input_shape=(640, 360, 3), num_classes=2).build()
 
     model.summary()

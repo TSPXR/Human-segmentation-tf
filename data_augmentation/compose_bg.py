@@ -183,14 +183,11 @@ if __name__ == '__main__':
         
         original_mask = cv2.imread(mask_list[idx])
         
-        original_mask = np.where(original_mask>=1, 255, 0).astype(np.uint8)
-
         original_rgb_shape = original_rgb.shape[:2]
         original_mask_shape = original_mask.shape[:2]
 
         if original_rgb_shape != original_mask_shape:
             print('not match shape')
-            
             h, w = original_rgb_shape
             original_mask = cv2.resize(original_mask, (w, h), interpolation=cv2.INTER_NEAREST)
         
@@ -198,12 +195,15 @@ if __name__ == '__main__':
         # transformed = img_aug(image=original_rgb.copy(), mask=original_mask.copy())
         # aug_rgb = transformed['image']
         # aug_mask = transformed['mask']
-        image_loader.save_images(rgb=original_rgb.copy(), mask=original_mask.copy(), prefix='{0}_idx_{1}_rgb_original_'.format(name, idx))
+        # image_loader.save_images(rgb=original_rgb.copy(), mask=original_mask.copy(), prefix='{0}_idx_{1}_rgb_original_'.format(name, idx))
 
+        # random shift
+        h, w = original_rgb_shape
+        max_dx = int(w/2)
+        max_dy = int(h/1.7)
+        original_sift_rgb, original_sift_mask = image_loader.image_random_translation(rgb=original_rgb.copy(), mask=original_mask.copy(), min_dx=0, min_dy=0, max_dx=max_dx, max_dy=max_dy)
+        image_loader.save_images(rgb=original_sift_rgb, mask=original_sift_mask, prefix='{0}_idx_{1}_rgb_original_shift'.format(name, idx))
 
-        # erode mask
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        original_mask = cv2.erode(original_mask, kernel)
 
         """1. change only bg"""
         # get random background idx
@@ -220,12 +220,9 @@ if __name__ == '__main__':
         image_loader.save_images(rgb=change_bg.copy(), mask=original_mask.copy(), prefix='{0}_idx_{1}_change_bg_'.format(name, idx))
 
 
-        """2. change augmented bg (color aug + rgb shift)"""
-        # random shift original rgb and mask
-        for compose_aug in range(1):
-            h, w = original_rgb_shape
-            max_dx = int(w/2)
-            max_dy = int(h/1.7)
+        # """2. change augmented bg (color aug + rgb shift)"""
+        # # random shift original rgb and mask
+        for compose_aug in range(3):
             sift_rgb, sift_mask = image_loader.image_random_translation(rgb=original_rgb.copy(), mask=original_mask.copy(), min_dx=0, min_dy=0, max_dx=max_dx, max_dy=max_dy)
 
             sift_rgb = cv2.flip(sift_rgb, 1)
@@ -250,9 +247,3 @@ if __name__ == '__main__':
             compose_aug_rgb = cv2.add(bg_img_whitout_rgb, rgb_img_only_object)
 
             image_loader.save_images(rgb=compose_aug_rgb, mask=sift_mask.copy(), prefix='{0}_idx_{1}_{2}_change_bg_augmented'.format(name, idx, compose_aug))
-
-
-
-        # 1. Default image (1) + Random rotation (1) + Random translation (1)
-        # image_loader.save_images(rgb=rgb.copy(), mask=mask.copy(), prefix='idx_{0}_original_'.format(idx))
-
