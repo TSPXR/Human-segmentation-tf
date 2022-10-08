@@ -9,7 +9,7 @@ import tensorflow as tf
 import random
 import albumentations as A
 
-name = 'human_fahsion_1_dataset'
+name = 'yebin_fashion_dataset'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/select/rgb/'.format(name))

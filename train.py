@@ -32,11 +32,11 @@ parser.add_argument('--saved_model_path', type=str,   help='Saved model weight p
 # Set Training Options
 # Multi-adam-b16-e150-lr0.005-focal2.0-augment-boundary20_aux0.4-weightDecay
 parser.add_argument('--model_prefix',     type=str,    help='Model name',
-                    default='b16-e50-lr0.005-adam-640x360-no-augment-multiGPU-onlyCE-ddrnet-onlymatting-pidnet')
+                    default='efficientnet-b16-ep100-lr0.005-focal-adam-640x360-wd0.00001')
 parser.add_argument('--batch_size',       type=int,    help='Batch size per each GPU',
                     default=16)
 parser.add_argument('--epoch',            type=int,    help='Training epochs',
-                    default=50)
+                    default=100)
 parser.add_argument('--lr',               type=float,  help='Initial learning rate',
                     default=0.005)
 parser.add_argument('--weight_decay',     type=float,  help='Set Weight Decay',
@@ -49,7 +49,7 @@ parser.add_argument('--network_name',     type=str,    help='Select segmentation
                                                             |   network_name    : description | \
                                                             [ 1. pidnet       : A Real-time Semantic Segmentation Network\
                                                                                 Inspired from PID Controller ]',
-                    default='pidnet')
+                    default='efficientnet')
 parser.add_argument('--image_norm_type',  type=str,    help='Set RGB image nornalize format (tf or torch or no)\
                                                              [ 1. tf    : Rescaling RGB image -1 ~ 1 from imageNet ]\
                                                              [ 2. torch : Rescaling RGB image 0 ~ 1 from imageNet ]\
@@ -62,7 +62,7 @@ parser.add_argument('--loss_type',        type=str,    help='Set Train loss func
 parser.add_argument('--optimizer',        type=str,    help='Set optimizer',
                     default='adam')
 parser.add_argument('--use_weightDecay',  type=bool,   help='Whether to use weightDecay',
-                    default=False)
+                    default=True)
 parser.add_argument('--mixed_precision',  type=bool,   help='Whether to use mixed_precision',
                     default=True)
 parser.add_argument('--model_name',       type=str,    help='Set the model name to save',

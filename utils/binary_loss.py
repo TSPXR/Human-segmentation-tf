@@ -158,8 +158,8 @@ class SemgnetationLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
-        # loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
-        loss = self.sparse_categorical_cross_entropy(y_true=y_true, y_pred=y_pred)
+        loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
+        # loss = self.sparse_categorical_cross_entropy(y_true=y_true, y_pred=y_pred)
 
         return loss
 

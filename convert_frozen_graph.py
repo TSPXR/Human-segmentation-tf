@@ -40,11 +40,11 @@ if __name__ == '__main__':
     # tf.config.run_functions_eagerly(True)
     gpu_number = '/device:GPU:' + str(args.gpu_num)
     with tf.device(gpu_number):
-
-        from models.model_zoo.PIDNet import PIDNet
         model = ModelBuilder(image_size=args.image_size,
                                   num_classes=args.num_classes, use_weight_decay=False, weight_decay=0)
-        model = model.build_model(model_name='pidnet', training=False)
+        model = model.build_model(model_name='efficientnet', training=False)
+
+        
 
         # model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
         #                planes=32, ppm_planes=96, head_planes=128, augment=False)

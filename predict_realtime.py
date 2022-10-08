@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size",     type=int,
                     help="Evaluation batch size", default=1)
 parser.add_argument("--num_classes",     type=int,
-                    help="Model num classes", default=1)
+                    help="Model num classes", default=2)
 parser.add_argument("--image_size",     type=tuple,
                     help="Model image size (input resolution)", default=(640, 360))
 parser.add_argument("--video_dir",    type=str,
@@ -21,7 +21,7 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='/1007/_1007_b16-e50-lr0.001-adam-640x360-no-augment-multiGPU-normalBCE_best_loss.h5')
+                    help="Saved model weights directory", default='1007/_1007_pidnet-b16-ep100-lr0.005-focal-adam-640x360-wd0.00001_best_loss.h5')
 
 args = parser.parse_args()
 
@@ -45,8 +45,8 @@ if __name__ == '__main__':
 
 
     # Camera
-    frame_width = 1280
-    frame_height = 720
+    frame_width = 720
+    frame_height = 1280
     capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     while cv2.waitKey(1) < 0:
         ret, frame = capture.read()
         
-
+        print(frame.shape)
         
         start_t = timeit.default_timer()
         
@@ -79,8 +79,11 @@ if __name__ == '__main__':
 
         
         output = output[0]
+        output = tf.expand_dims(output, axis=-1)
+
         
-        output = tf.where(output>0.5, 1., 0.)
+
+        print(output)
         
         output = tf.image.resize(output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
         frame *= output

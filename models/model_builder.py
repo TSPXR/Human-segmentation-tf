@@ -68,12 +68,23 @@ class ModelBuilder(object):
                 
             model = PIDNet(input_shape=(*self.image_size, 3), m=2, n=3, num_classes=self.num_classes,
                            planes=32, ppm_planes=96, head_planes=128, augment=augment_mode, training=training).build()
+                           
 
         elif model_name == 'ddrnet':
 
             from models.model_zoo.DDRNet import ddrnet_23_slim
 
             model = ddrnet_23_slim(input_shape=(*self.image_size, 3), num_classes=self.num_classes, augment=False)
+
+        elif model_name == 'efficientnet':
+            
+            self.kernel_initializer = tf.keras.initializers.VarianceScaling(scale=2.0, mode="fan_out", distribution="truncated_normal")
+            from models.model_zoo.EfficientDeepLabv3 import EfficientDeepLabV3
+            model = EfficientDeepLabV3(input_shape=(*self.image_size, 3), num_classes=self.num_classes, training=training).build()
+
+            
+
+            
         
         # Initialize weights and set attenuation when set to training mode is activate.
         if training:
@@ -84,11 +95,6 @@ class ModelBuilder(object):
                     layer.kernel_initializer = self.kernel_initializer
                 if hasattr(layer, 'depthwise_initializer'):
                     layer.depthwise_initializer = self.kernel_initializer
-                
-                  # for BatchNormalization
-                if hasattr(layer, 'beta_initializer'):
-                    layer.beta_initializer = "zeros"
-                    layer.gamma_initializer = "ones"
 
 
             # Set weight decay
