@@ -161,12 +161,12 @@ class HumanSegLoss(tf.keras.losses.Loss):
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
         # BCE loss
-        bce_loss = tf.keras.losses.BinaryFocalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+        bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+
         if self.use_multi_gpu:
             bce_loss = tf.reduce_mean(bce_loss)
 
         # Dice loss
-
         y_true_f = tf.keras.backend.flatten(y_true)
         y_pred_f = tf.keras.backend.flatten(y_pred)
         intersection = tf.keras.backend.sum(y_true_f * y_pred_f)

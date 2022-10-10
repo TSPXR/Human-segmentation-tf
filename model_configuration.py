@@ -84,9 +84,9 @@ class ModelConfiguration(DatasetGenerator):
         checkpoint_val_loss = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_loss.h5',
                                               monitor='val_loss', save_best_only=True, save_weights_only=True, verbose=1)
         
-        checkpoint_val_iou = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_iou.h5',
-                                             monitor=self.miou_name, save_best_only=True, save_weights_only=True,
-                                             verbose=1, mode='max')
+        checkpoint_val_iou = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_mse.h5',
+                                             monitor=self.metric_name, save_best_only=True, save_weights_only=True,
+                                             verbose=1)
 
         tensorboard = tf.keras.callbacks.TensorBoard(
             log_dir=self.TENSORBOARD_DIR + 'semantic/' + self.MODEL_PREFIX, write_graph=True, write_images=True)
@@ -158,10 +158,11 @@ class ModelConfiguration(DatasetGenerator):
         self.metric_list = []        
 
         from utils.metrics import MIoU
-        mIoU = MIoU(self.NUM_CLASSES+1)
-        self.miou_name = 'val_main_m_io_u'
+        mse_metric = tf.keras.metrics.MeanSquaredError(name='mse')
+        # mIoU = MIoU(self.NUM_CLASSES+1)
+        self.metric_name = 'val_mse'
 
-        self.metric_list.append(mIoU)
+        self.metric_list.append(mse_metric)
 
 
     def train(self):

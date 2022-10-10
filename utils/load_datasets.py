@@ -152,6 +152,12 @@ class DatasetGenerator(DataLoadHandler):
             new_w = self.image_size[1] * scale
 
             if scale < 1.0:
+
+                img = tf.image.resize(img, size=(self.image_size[0], self.image_size[1]),
+                                method=tf.image.ResizeMethod.BILINEAR)
+                labels = tf.image.resize(labels, size=(self.image_size[0], self.image_size[1]),
+                                    method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+
                 concat_img = tf.concat([img, labels], axis=-1)
                 concat_img = tf.image.random_crop(
                 concat_img, (new_h, new_w, 4))
