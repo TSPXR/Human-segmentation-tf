@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_dir",   type=str,    help="Set the model storage directory",
                     default='./checkpoints/')
 parser.add_argument("--model_weights", type=str,     help="Saved model weights directory",
-                    default='./checkpoints/1008/_1008_efficientnet-b16-ep100-lr0.005-focal-adam-640x360-wd0.00001_best_loss.h5')
+                    default='./checkpoints/1008/_1008_efficientnet-b16-ep100-lr0.01-focal-adam-640x360_best_loss.h5')
 parser.add_argument("--num_classes",          type=int,    help="Set num classes for model and post-processing",
                     default=2)  
 parser.add_argument("--image_size",          type=tuple,    help="Set image size for priors and post-processing",

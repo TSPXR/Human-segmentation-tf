@@ -21,24 +21,18 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='1007/_1007_pidnet-b16-ep100-lr0.005-focal-adam-640x360-wd0.00001_best_loss.h5')
+                    help="Saved model weights directory", default='1008/_1008_efficientnet-b16-ep100-lr0.01-focal-adam-640x360_best_loss.h5')
 
 args = parser.parse_args()
 
 
 if __name__ == '__main__':
     # model = ModelBuilder(image_size=args.image_size, num_classes=args.num_classes).build_model()
-    from models.model_zoo.PIDNet import PIDNet
+    
 
-    model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
-                planes=32, ppm_planes=96, head_planes=128, augment=False, training=False).build()
-
-    # from models.model_zoo.pidnet.pidnet import PIDNet
-        
-    # model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
-    #                    planes=32, ppm_planes=96, head_planes=128, augment=False)
-    # model.build((None, *args.image_size, 3))
-
+    model = ModelBuilder(image_size=args.image_size,
+                                  num_classes=args.num_classes, use_weight_decay=False, weight_decay=0)
+    model = model.build_model(model_name='efficientnet', training=False)
 
     model.load_weights(args.checkpoint_dir + args.weight_name, by_name=True)
     model.summary()
@@ -54,7 +48,7 @@ if __name__ == '__main__':
     while cv2.waitKey(1) < 0:
         ret, frame = capture.read()
         
-        print(frame.shape)
+        
         
         start_t = timeit.default_timer()
         
@@ -83,12 +77,12 @@ if __name__ == '__main__':
 
         
 
-        print(output)
+        
         
         output = tf.image.resize(output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
         frame *= output
 
-        cv2.putText(output, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
+        cv2.putText(frame, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
                         (200, 50, 0), 3, cv2.LINE_AA)
         cv2.imshow("VideoFrame", frame)
 

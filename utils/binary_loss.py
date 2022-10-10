@@ -110,7 +110,7 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
 
 
 @tf.keras.utils.register_keras_serializable()
-class SemgnetationLoss(tf.keras.losses.Loss):
+class HumanSegLoss(tf.keras.losses.Loss):
     def __init__(self, gamma, class_weight: Optional[Any] = None,
                  from_logits: bool = True, use_multi_gpu: bool = False,
                  global_batch_size: int = 16, num_classes: int = 3,
@@ -142,6 +142,8 @@ class SemgnetationLoss(tf.keras.losses.Loss):
         self.num_classes = num_classes
         self.dataset_name = dataset_name
         self.loss_type = loss_type
+        self.smooth = 0.00001
+
 
         if self.use_multi_gpu:
             self.loss_reduction = losses.Reduction.NONE
@@ -158,7 +160,22 @@ class SemgnetationLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
-        loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
+        # Dice loss
+        nominator = 2 * tf.reduce_sum(tf.multiply(y_pred, y_true)) + self.smooth
+        denominator = tf.reduce_sum(y_pred ** self.gamma) + tf.reduce_sum(y_true ** self.gamma) + self.smooth
+        dice_loss = 1 - tf.divide(nominator, denominator)
+        if self.use_multi_gpu:
+            dice_loss = dice_loss * (1. / self.global_batch_size)
+            
+        # BCE loss
+        bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+        if self.use_multi_gpu:
+            bce_loss = tf.reduce_mean(bce_loss)
+
+        loss = (dice_loss * 0.5) + (bce_loss * 0.5)
+
+        # Semantic loss
+        # loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
         # loss = self.sparse_categorical_cross_entropy(y_true=y_true, y_pred=y_pred)
 
         return loss

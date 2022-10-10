@@ -111,50 +111,60 @@ if __name__ == '__main__':
         # 컨투어 전체 병합
         contour_list = []
         len_contour = len(contours)
+        
         for i in range(len_contour):
             drawing = np.zeros_like(original_mask, np.uint8)  # create a black image
-            img_contour = cv2.drawContours(drawing, contours, i, (255, 255, 255), -1)
+            img_contour = cv2.drawContours(drawing, contours, i, (255, 255, 255), -1)            
             contour_list.append(img_contour)  
         original_mask = sum(contour_list)
         
-        
-        
-            
-
         
         original_mask = original_mask.astype(np.uint8)
         # 병합된 컨투어 마스크에서 외부 노이즈 제거
         compose_contours, _ = cv2.findContours(
                 original_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # 컨투어가 두 개 이상일 때만
-        if len(compose_contours) >= 2:
-            for i in range(len(compose_contours)):
-                contour_area = cv2.contourArea(compose_contours[i])
+        
+        compose_contours_len = len(compose_contours)
+        if len(compose_contours) == 1:
+            # for i in range(len(compose_contours)):
+            #     contour_area = cv2.contourArea(compose_contours[i])
                 
-                if contour_area >= 50:
-                    original_mask = cv2.drawContours(original_mask, compose_contours, i, (255, 255, 255), -1)
+            #     if contour_area >= 50:
+            #         original_mask = cv2.drawContours(original_mask, compose_contours, i, (255, 255, 255), -1)
 
-                # 넓이가 50 이하의 작은 컨투어만 0으로 칠함
-                else:
-                    original_mask = cv2.drawContours(original_mask, compose_contours, i, (0, 0, 0), -1)
+            #     # 넓이가 50 이하의 작은 컨투어만 0으로 칠함
+            #     else:
+            #         print('draw zeros')
+            #         original_mask = cv2.drawContours(original_mask, compose_contours, i, (0, 0, 0), -1)
+
+            #         test_mask = np.expand_dims(original_mask, axis=-1)
+            #         test_mask = np.concatenate([test_mask, test_mask, test_mask], axis=-1)
+            #         masked_image = original_rgb * (test_mask / 255)
+            #         masked_image = masked_image.astype(np.uint8)
+            #         concat_img = cv2.hconcat([test_mask, masked_image]) # original_rgb * (original_mask/255)
+            #         cv2.imshow('test', concat_img)
+            #         cv2.waitKey(0)
 
 
 
-        # zero_maks = np.zeros(original_mask.shape, np.uint8)
-        # zero_maks = cv2.drawContours(zero_maks, draw_contours, -1, 1, thickness=-1)
+            original_mask = cv2.erode(original_mask, kernel, iterations=1)  #// make dilation image
+
+            # zero_maks = np.zeros(original_mask.shape, np.uint8)
+            # zero_maks = cv2.drawContours(zero_maks, draw_contours, -1, 1, thickness=-1)
 
 
-        # original_mask += zero_maks
-        original_mask = np.where(original_mask>=1, 255, 0).astype(np.uint8)
-        original_mask = np.expand_dims(original_mask, axis=-1)
-        
-        
-        if args.test:
-            test_mask = np.concatenate([original_mask, original_mask, original_mask], axis=-1)
-            masked_image = original_rgb * (test_mask / 255)
-            masked_image = masked_image.astype(np.uint8)
-            concat_img = cv2.hconcat([original_rgb, test_mask, masked_image]) # original_rgb * (original_mask/255)
-            cv2.imshow('test', concat_img)
-            cv2.waitKey(0)
+            # original_mask += zero_maks
+            original_mask = np.where(original_mask>=1, 255, 0).astype(np.uint8)
+            original_mask = np.expand_dims(original_mask, axis=-1)
+            
+            
+            if args.test:
+                test_mask = np.concatenate([original_mask, original_mask, original_mask], axis=-1)
+                masked_image = original_rgb * (test_mask / 255)
+                masked_image = masked_image.astype(np.uint8)
+                concat_img = cv2.hconcat([original_rgb, test_mask, masked_image]) # original_rgb * (original_mask/255)
+                cv2.imshow('test', concat_img)
+                cv2.waitKey(0)
 
-        image_loader.save_images(rgb=original_rgb, mask=original_mask, prefix='{0}_{1}'.format(name, idx))
+            image_loader.save_images(rgb=original_rgb, mask=original_mask, prefix='{0}_{1}'.format(name, idx))

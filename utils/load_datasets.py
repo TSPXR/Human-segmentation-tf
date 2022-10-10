@@ -193,18 +193,8 @@ class DatasetGenerator(DataLoadHandler):
                 img       (tf.Tensor)  : tf.Tensor data (shape=H,W,3)
                 labels    (tf.Tensor)  : tf.Tensor data (shape=H,W,1)
         """
-        if tf.random.uniform([]) > 0.1:
+        if tf.random.uniform([]) > 0.5:
             img = tf.image.random_jpeg_quality(img, 50, 100)
-
-        if tf.random.uniform([]) > 0.2:
-            # Degrees to Radian
-            upper = 35 * (self.pi/180.0)
-
-            rand_degree = tf.random.uniform([], minval=0., maxval=upper)
-
-            img = tfa.image.rotate(img, rand_degree, interpolation='bilinear')
-            labels = tfa.image.rotate(labels, rand_degree, interpolation='nearest')
-
         if tf.random.uniform([]) > 0.5:
             img = tf.image.random_saturation(img, 0.5, 1.5 )
         if tf.random.uniform([]) > 0.5:
@@ -214,12 +204,27 @@ class DatasetGenerator(DataLoadHandler):
         if tf.random.uniform([]) > 0.5:
             img = tf.image.flip_left_right(img)
             labels = tf.image.flip_left_right(labels)
-        if tf.random.uniform([]) > 0.1:
-            channels = tf.unstack (img, axis=-1)
-            img = tf.stack([channels[2], channels[1], channels[0]], axis=-1)
-        
 
-        labels = tf.cast(labels, dtype=tf.int32)
+        if tf.random.uniform([]) > 0.1:
+            # Degrees to Radian
+            upper = 20 * (self.pi/180.0)
+            rand_degree = tf.random.uniform([], minval=0., maxval=upper)
+            img = tfa.image.rotate(img, rand_degree, interpolation='bilinear')
+            labels = tfa.image.rotate(labels, rand_degree, interpolation='nearest')
+
+        if tf.random.uniform([]) > 0.1:
+            shift_x_max = self.image_size[1] / 3
+            shift_y_max = self.image_size[0] / 4
+            max_x = tf.random.uniform([], minval=0., maxval=shift_x_max)
+            max_y = tf.random.uniform([], minval=0., maxval=shift_y_max)
+            max_x = tf.cast(max_x, dtype=tf.int32)
+            max_y = tf.cast(max_y, dtype=tf.int32)
+            if tf.random.uniform([]) > 0.5:
+                max_x *= -1
+            if tf.random.uniform([]) > 0.5:
+                max_y *= -1
+            img = tfa.image.translate_xy(image=img, translate_to=[max_x, max_y], replace=0)
+            labels = tfa.image.translate_xy(image=labels, translate_to=[max_x, max_y], replace=0)
 
         return (img, labels)
 
@@ -242,10 +247,6 @@ class DatasetGenerator(DataLoadHandler):
         labels = tf.image.resize(labels, size=(self.image_size[0], self.image_size[1]),
                                  method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-        # Label normalization (adjust to number of classes to classify)
-        
-        labels = tf.where(labels>=1, 1, 0)
-
         # Input image normalization
         if self.norm_type == 'tf':
             # Normalize the input image to 'tf' style (-1 ~ 1)
@@ -256,8 +257,6 @@ class DatasetGenerator(DataLoadHandler):
         else:
             # Normalize the input image (0 ~ 1)
             img /= 255.
-        
-        labels = tf.cast(labels, dtype=tf.int32)
 
         return (img, labels)
 

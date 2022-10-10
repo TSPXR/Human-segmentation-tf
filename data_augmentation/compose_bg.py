@@ -5,12 +5,11 @@ import glob
 import os
 import argparse
 import natsort
-import tensorflow as tf
 import random
 import albumentations as A
 
-name = 'yebin_fashion_dataset'
-
+name = 'pp_human_dataset'
+max_aug = 3
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/select/rgb/'.format(name))
 parser.add_argument("--mask_path",     type=str,   help="raw mask path", default='./raw_data/raw_datasets/{0}/select/gt/'.format(name))
@@ -119,6 +118,7 @@ class ImageAugmentationLoader():
         
         random_dx = random.randint(min_dx, max_dx)
         random_dy = random.randint(min_dy, max_dy)
+        random_axis = random.randint(0, 1)
         
         if max_dx == 0:
             random_dx = 1
@@ -126,8 +126,10 @@ class ImageAugmentationLoader():
         if max_dy == 0:
             random_dy = 1
 
-        if tf.random.uniform([]) > 0.5:
+        if random_axis == 1:
             random_dx *= -1
+
+
 
         # if tf.random.uniform([]) > 0.5:
         #     random_dy *= -1
@@ -162,6 +164,14 @@ if __name__ == '__main__':
     rgb_list = image_loader.get_rgb_list()
     mask_list = image_loader.get_mask_list()
     bg_list = image_loader.get_bg_list()
+
+    if len(rgb_list) <= 3000:
+        max_aug = 3
+    elif len(rgb_list) <= 8000:
+        max_aug = 2
+    else:
+        max_aug = 1 
+    print('dataset name : {0}, max_aug : {1}'.format(name, max_aug))
     
     # scale_rotate = A.ShiftScaleRotate(rotate_limit=40, scale_limit=0.1, )
     random_sun = A.RandomSunFlare(num_flare_circles_lower=1, num_flare_circles_upper=4, src_radius=50, )
@@ -169,9 +179,8 @@ if __name__ == '__main__':
     random_snow = A.RandomSnow(brightness_coeff=1.2)
     random_jitter = A.RandomBrightnessContrast()
     random_frog = A.RandomFog()
-    random_blur = A.Blur()
+    random_blur = A.AdvancedBlur()
     
-    img_aug = A.Compose([random_jitter, random_shadow, random_snow])
     bg_aug = A.Compose([random_frog, random_jitter, random_shadow, random_snow, random_sun, random_blur])
 
     # 1. rgb 이미지 배경 영역 블러링
@@ -187,46 +196,19 @@ if __name__ == '__main__':
         original_mask_shape = original_mask.shape[:2]
 
         if original_rgb_shape != original_mask_shape:
-            print('not match shape')
+            print('not match shape!  resize mask to rgb shape')
             h, w = original_rgb_shape
             original_mask = cv2.resize(original_mask, (w, h), interpolation=cv2.INTER_NEAREST)
         
-        # # image aug augmentation
-        # transformed = img_aug(image=original_rgb.copy(), mask=original_mask.copy())
-        # aug_rgb = transformed['image']
-        # aug_mask = transformed['mask']
-        # image_loader.save_images(rgb=original_rgb.copy(), mask=original_mask.copy(), prefix='{0}_idx_{1}_rgb_original_'.format(name, idx))
-
         # random shift
         h, w = original_rgb_shape
         max_dx = int(w/2)
         max_dy = int(h/1.7)
-        original_sift_rgb, original_sift_mask = image_loader.image_random_translation(rgb=original_rgb.copy(), mask=original_mask.copy(), min_dx=0, min_dy=0, max_dx=max_dx, max_dy=max_dy)
-        image_loader.save_images(rgb=original_sift_rgb, mask=original_sift_mask, prefix='{0}_idx_{1}_rgb_original_shift'.format(name, idx))
-
-
-        """1. change only bg"""
-        # get random background idx
-        bg_rnd_idx = random.randint(0, len(bg_list)-1)
-        # load bg img
-        original_bg = cv2.imread(bg_list[bg_rnd_idx])
-        # resize bg img
-        bg_image = image_loader.resize_bg_image(bg_image=original_bg, rgb_shape=original_rgb.shape)
-
-        # change bg img from mask
-        change_bg = np.where(
-                    original_mask == 255, original_rgb, bg_image)
-        # save bg composed data(rgb+mask)
-        image_loader.save_images(rgb=change_bg.copy(), mask=original_mask.copy(), prefix='{0}_idx_{1}_change_bg_'.format(name, idx))
-
 
         # """2. change augmented bg (color aug + rgb shift)"""
         # # random shift original rgb and mask
-        for compose_aug in range(3):
+        for compose_aug in range(max_aug):
             sift_rgb, sift_mask = image_loader.image_random_translation(rgb=original_rgb.copy(), mask=original_mask.copy(), min_dx=0, min_dy=0, max_dx=max_dx, max_dy=max_dy)
-
-            sift_rgb = cv2.flip(sift_rgb, 1)
-            sift_mask = cv2.flip(sift_mask, 1)
 
             # get random background idx
             bg_rnd_idx = random.randint(0, len(bg_list)-1)

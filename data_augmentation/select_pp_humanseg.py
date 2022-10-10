@@ -99,11 +99,17 @@ if __name__ == '__main__':
                 
                 mask = cv2.imread(mask_name) 
 
-                try:
+                if mask is not None:
                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-                    mask = np.where(mask>1. , 255, 0)
-                    mask = np.expand_dims(mask, axis=-1)
-                
+                    mask = np.where(mask>1. , 255, 0).astype(np.uint8)
+                    kernel_size_row = 3
+                    kernel_size_col = 3
+                    kernel = np.ones((kernel_size_row, kernel_size_col), np.uint8)
+                    
+                    mask = cv2.erode(mask, kernel, iterations=1)  #// make dilation image
+                    mask = np.expand_dims(mask, axis=-1).astype(np.uint8)
+                    
+                    
                     # if args.test:                    
                     # test_mask = np.concatenate([mask, mask, mask], axis=-1)
                     # masked_image = img * (test_mask / 255)
@@ -115,10 +121,5 @@ if __name__ == '__main__':
                     # cv2.imshow('test', concat_img)
                     # cv2.waitKey(0)
 
-
-
-                    image_loader.save_images(rgb=img, mask=mask, prefix='matting_human_dataset_{0}'.format(sample_idx))
-                except:
-                    continue
-
-                
+                    image_loader.save_images(rgb=img, mask=mask, prefix='{0}_{1}'.format(name, sample_idx))
+                    

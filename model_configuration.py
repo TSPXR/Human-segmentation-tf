@@ -3,7 +3,7 @@ from tensorflow.keras import mixed_precision
 from models.model_zoo.pidnet.pidnet import PIDNet
 from models.model_builder import ModelBuilder
 from utils.load_datasets import DatasetGenerator
-from utils.binary_loss import BinaryAuxiliaryLoss, BinaryBoundaryLoss, SemgnetationLoss
+from utils.binary_loss import BinaryAuxiliaryLoss, BinaryBoundaryLoss, HumanSegLoss
 import os
 import tensorflow as tf
 import tensorflow_addons as tfa
@@ -91,11 +91,11 @@ class ModelConfiguration(DatasetGenerator):
         tensorboard = tf.keras.callbacks.TensorBoard(
             log_dir=self.TENSORBOARD_DIR + 'semantic/' + self.MODEL_PREFIX, write_graph=True, write_images=True)
 
-        # lrDecay = tf.keras.optimizers.schedules.PolynomialDecay(initial_learning_rate=self.INIT_LR,
-        #                                                           decay_steps=self.EPOCHS,
-        #                                                           end_learning_rate=self.INIT_LR * 0.01, power=0.9)
+        lrDecay = tf.keras.optimizers.schedules.PolynomialDecay(initial_learning_rate=self.INIT_LR,
+                                                                  decay_steps=self.EPOCHS,
+                                                                  end_learning_rate=self.INIT_LR * 0.001, power=0.9)
         
-        lrDecay = tf.keras.optimizers.schedules.CosineDecay(initial_learning_rate=self.INIT_LR, decay_steps=self.EPOCHS, alpha=self.INIT_LR * 0.001)
+        # lrDecay = tf.keras.optimizers.schedules.CosineDecay(initial_learning_rate=self.INIT_LR, decay_steps=self.EPOCHS, alpha=self.INIT_LR * 0.001)
 
         lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lrDecay, verbose=1)
         
@@ -158,7 +158,7 @@ class ModelConfiguration(DatasetGenerator):
         self.metric_list = []        
 
         from utils.metrics import MIoU
-        mIoU = MIoU(self.NUM_CLASSES)
+        mIoU = MIoU(self.NUM_CLASSES+1)
         self.miou_name = 'val_main_m_io_u'
 
         self.metric_list.append(mIoU)
@@ -176,7 +176,7 @@ class ModelConfiguration(DatasetGenerator):
         self.__configuration_metric()
         self.__set_callbacks()
         
-        main_loss = SemgnetationLoss(gamma=2.0, from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
+        main_loss = HumanSegLoss(gamma=2.0, from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES,
                             dataset_name=self.DATASET_NAME, loss_type=self.LOSS_TYPE)
 
