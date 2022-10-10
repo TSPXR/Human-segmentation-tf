@@ -1,17 +1,12 @@
-from typing import Union
 import numpy as np
 import cv2
 import glob
 import os
 import argparse
 import natsort
-import tensorflow as tf
 import matplotlib.pyplot as plt
-import tensorflow_addons as tfa
-import math
-import random
 
-name = 'human_fashion_2_dataset'
+name = 'human_fahsion_1_dataset'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/rgb/'.format(name))
@@ -47,24 +42,6 @@ class ImageAugmentationLoader():
         self.mask_list = glob.glob(os.path.join(self.MASK_PATH+'*.png'))
         self.mask_list = natsort.natsorted(self.mask_list,reverse=True)
 
-
-    def image_resize(self, rgb: np.ndarray, mask: np.ndarray, size=(1600, 900)) -> Union[np.ndarray, np.ndarray]:
-        """
-            Image resizing function    
-            Args:
-                rgb      (np.ndarray) : (H,W,3) Image.
-                mask     (np.ndarray) : (H,W,1) Image.
-                size     (tuple)      : Image size to be adjusted.
-        """
-        resized_rgb = tf.image.resize(images=rgb, size=size, method=tf.image.ResizeMethod.BILINEAR)
-        resized_rgb = resized_rgb.numpy().astype(np.uint8)
-
-        resized_mask = tf.image.resize(images=mask, size=size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-        resized_mask = resized_mask.numpy().astype(np.uint8)
-
-
-        return resized_rgb, resized_mask
-
     def save_images(self, rgb, mask, prefix):
         cv2.imwrite(self.OUT_RGB_PATH + prefix +'_rgb.jpg', rgb)
         cv2.imwrite(self.OUT_MASK_PATH + prefix + '_mask.png', mask)
@@ -92,7 +69,6 @@ if __name__ == '__main__':
         kernel_size_row = 3
         kernel_size_col = 3
         kernel = np.ones((kernel_size_row, kernel_size_col), np.uint8)
-        original_mask = cv2.dilate(original_mask, kernel, iterations=1)  #// make dilation image
         
         original_rgb_shape = original_rgb.shape[:2]
         original_mask_shape = original_mask.shape[:2]
@@ -118,15 +94,16 @@ if __name__ == '__main__':
             contour_list.append(img_contour)  
         original_mask = sum(contour_list)
         
-        
-        original_mask = original_mask.astype(np.uint8)
+
+        if len(contour_list) != 0:
+
         # 병합된 컨투어 마스크에서 외부 노이즈 제거
-        compose_contours, _ = cv2.findContours(
+            compose_contours, _ = cv2.findContours(
                 original_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # 컨투어가 두 개 이상일 때만
         
-        compose_contours_len = len(compose_contours)
-        if len(compose_contours) == 1:
+            compose_contours_len = len(compose_contours)
+            if compose_contours_len == 1:
             # for i in range(len(compose_contours)):
             #     contour_area = cv2.contourArea(compose_contours[i])
                 
@@ -148,23 +125,23 @@ if __name__ == '__main__':
 
 
 
-            original_mask = cv2.erode(original_mask, kernel, iterations=1)  #// make dilation image
+                original_mask = cv2.erode(original_mask, kernel, iterations=1)  #// make dilation image
 
-            # zero_maks = np.zeros(original_mask.shape, np.uint8)
-            # zero_maks = cv2.drawContours(zero_maks, draw_contours, -1, 1, thickness=-1)
+                # zero_maks = np.zeros(original_mask.shape, np.uint8)
+                # zero_maks = cv2.drawContours(zero_maks, draw_contours, -1, 1, thickness=-1)
 
 
-            # original_mask += zero_maks
-            original_mask = np.where(original_mask>=1, 255, 0).astype(np.uint8)
-            original_mask = np.expand_dims(original_mask, axis=-1)
-            
-            
-            if args.test:
-                test_mask = np.concatenate([original_mask, original_mask, original_mask], axis=-1)
-                masked_image = original_rgb * (test_mask / 255)
-                masked_image = masked_image.astype(np.uint8)
-                concat_img = cv2.hconcat([original_rgb, test_mask, masked_image]) # original_rgb * (original_mask/255)
-                cv2.imshow('test', concat_img)
-                cv2.waitKey(0)
+                # original_mask += zero_maks
+                original_mask = np.where(original_mask>=1, 255, 0).astype(np.uint8)
+                original_mask = np.expand_dims(original_mask, axis=-1)
+                
+                
+                if args.test:
+                    test_mask = np.concatenate([original_mask, original_mask, original_mask], axis=-1)
+                    masked_image = original_rgb * (test_mask / 255)
+                    masked_image = masked_image.astype(np.uint8)
+                    concat_img = cv2.hconcat([original_rgb, test_mask, masked_image]) # original_rgb * (original_mask/255)
+                    cv2.imshow('test', concat_img)
+                    cv2.waitKey(0)
 
-            image_loader.save_images(rgb=original_rgb, mask=original_mask, prefix='{0}_{1}'.format(name, idx))
+                image_loader.save_images(rgb=original_rgb, mask=original_mask, prefix='{0}_{1}'.format(name, idx))

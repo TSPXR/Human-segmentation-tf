@@ -84,6 +84,10 @@ class HumanSegmentation(tfds.core.GeneratorBasedBuilder):
     mask_files = list(mask_files[indices])
     
     for i in range(len(img_files)):
+
+      # mask_name = img_files[i].replace('rgb.', 'mask.')
+      # mask_name = mask_name.replace('rgb/', 'gt/')
+      # mask_name = mask_name.replace('jpg', 'png')
       yield i, {
           'rgb': img_files[i],
           'gt' : mask_files[i]

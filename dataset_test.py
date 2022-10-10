@@ -39,21 +39,9 @@ if __name__ == "__main__":
 
         original = original[0]
 
-        
         masking_image = tf.cast(original * tf.cast(mask, dtype=tf.float32), dtype=tf.uint8)
         
         original = tf.cast(original, dtype=tf.uint8)
-        
-
-
-        img = tfa.image.translate_xy(image=img, translate_to=[-100, -200], replace=0)
-
-        upper = 35 * (3.14/180.0)
-
-        rand_degree = tf.random.uniform([], minval=0., maxval=upper)
-
-        img = tfa.image.rotate(img, rand_degree, interpolation='bilinear')
-        mask = tfa.image.rotate(mask, rand_degree, interpolation='nearest')
 
 
         fig = plt.figure()
