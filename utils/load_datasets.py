@@ -224,7 +224,10 @@ class DatasetGenerator(DataLoadHandler):
             if tf.random.uniform([]) > 0.5:
                 max_y *= -1
             img = tfa.image.translate_xy(image=img, translate_to=[max_x, max_y], replace=0)
-            labels = tfa.image.translate_xy(image=labels, translate_to=[max_x, max_y], replace=0)
+            concat_labels = tf.concat([labels, labels, labels], axis=-1)
+            concat_labels = tfa.image.translate_xy(image=concat_labels, translate_to=[max_x, max_y], replace=0)
+            concat_labels = concat_labels[:, :, 0]
+            concat_labels = tf.expand_dims(concat_labels, axis=-1)
 
         return (img, labels)
 
