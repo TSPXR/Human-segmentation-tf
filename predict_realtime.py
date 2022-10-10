@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size",     type=int,
                     help="Evaluation batch size", default=1)
 parser.add_argument("--num_classes",     type=int,
-                    help="Model num classes", default=2)
+                    help="Model num classes", default=1)
 parser.add_argument("--image_size",     type=tuple,
                     help="Model image size (input resolution)", default=(640, 360))
 parser.add_argument("--video_dir",    type=str,
@@ -21,7 +21,7 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='1008/_1008_efficientnet-b16-ep100-lr0.01-focal-adam-640x360_best_loss.h5')
+                    help="Saved model weights directory", default='1010/_1010_pidnet-b16-ep100-lr0.005-bce+dice-adam-640x360-multigpu-binarySeg_best_loss.h5')
 
 args = parser.parse_args()
 
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     model = ModelBuilder(image_size=args.image_size,
                                   num_classes=args.num_classes, use_weight_decay=False, weight_decay=0)
-    model = model.build_model(model_name='efficientnet', training=False)
+    model = model.build_model(model_name='pidnet', training=False)
 
     model.load_weights(args.checkpoint_dir + args.weight_name, by_name=True)
     model.summary()
@@ -71,20 +71,19 @@ if __name__ == '__main__':
         
         FPS = int(1./(terminate_t - start_t ))
 
-        
-        output = output[0]
-        output = tf.expand_dims(output, axis=-1)
+        output = tf.where(output>=0.5, 1, 0)        
+        output = output[0] * 255
+        # output = tf.expand_dims(output, axis=-1)
 
-        
-
-        
-        
         output = tf.image.resize(output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
-        frame *= output
-
-        cv2.putText(frame, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
+        # frame *= output
+        
+        cv2.putText(output, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
                         (200, 50, 0), 3, cv2.LINE_AA)
-        cv2.imshow("VideoFrame", frame)
+        output_concat = np.concatenate([output, output, output], axis=-1)
+
+        concat_img = cv2.hconcat([frame, output_concat])
+        cv2.imshow("VideoFrame", concat_img)
 
     capture.release()
     cv2.destroyAllWindows()

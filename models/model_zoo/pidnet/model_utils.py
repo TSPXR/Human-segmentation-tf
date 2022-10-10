@@ -22,13 +22,11 @@ def segmentation_head(x_in, interplanes, outplanes, scale_factor=None, prefix='l
 
     if scale_factor is not None:
         # input_shape = tf.keras.backend.int_shape(x)
-        
         # height2 = input_shape[1] * scale_factor
         # width2 = input_shape[2] * scale_factor
         # x = tf.image.resize(x, size=(height2, width2), method='bilinear', name='output')
         # x = layers.Resizing(height=height2, width=width2, interpolation='bilinear', name='output')(x)
         x = layers.UpSampling2D(size=(scale_factor, scale_factor), interpolation='bilinear', name=prefix)(x)
-
     return x
 
 
