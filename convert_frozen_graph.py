@@ -4,7 +4,7 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 from models.model_zoo.pidnet.pidnet import PIDNet
 import argparse 
-
+import os
 
 # ONNX Convert
 # 1. pip install tf2onnx
@@ -13,6 +13,7 @@ import argparse
 
 # quantize_uint8
 # tensorflowjs_converter ./checkpoints/frozen_result/frozen_graph.pb ./checkpoints/converted_tfjs/ --input_format=tf_frozen_model --output_node_names='Identity' --quantize_float16 
+# tensorflowjs_converter ./checkpoints/frozen_result/frozen_graph.pb ./checkpoints/converted_tfjs/ --input_format=tf_frozen_model --output_node_names='Identity' --quantize_uint8 '*' 
 # tensorflowjs_converter ./checkpoints/new_tfjs_frozen/frozen_graph.pb ./checkpoints/converted_tfjs/ --input_format=tf_frozen_model --output_node_names='Identity' --quantize_uint8 '*'
 # tensorflowjs_converter --input_format=tf_frozen_model --output_node_names='Identity' ./checkpoints/new_tfjs_frozen/frozen_graph.pb ./checkpoints/converted_tfjs/
 
@@ -21,11 +22,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_dir",   type=str,    help="Set the model storage directory",
                     default='./checkpoints/')
 parser.add_argument("--model_weights", type=str,     help="Saved model weights directory",
-                    default='./checkpoints/1008/_1008_efficientnet-b16-ep100-lr0.01-focal-adam-640x360_best_loss.h5')
+                    default='./checkpoints/1011/_1011_pidnet-b16-ep100-lr0.005-focal+aux+boundary-adam-256x256-multigpu-semanticSeg_best_loss.h5')
 parser.add_argument("--num_classes",          type=int,    help="Set num classes for model and post-processing",
                     default=2)  
 parser.add_argument("--image_size",          type=tuple,    help="Set image size for priors and post-processing",
-                    default=(640, 360))
+                    default=(256, 256))
 parser.add_argument("--gpu_num",          type=int,    help="Set GPU number to use(When without distribute training)",
                     default=0)
 parser.add_argument("--frozen_dir",   type=str,    help="Path to save frozen graph transformation result",
@@ -42,16 +43,12 @@ if __name__ == '__main__':
     with tf.device(gpu_number):
         model = ModelBuilder(image_size=args.image_size,
                                   num_classes=args.num_classes, use_weight_decay=False, weight_decay=0)
-        model = model.build_model(model_name='efficientnet', training=False)
-
-        
+        model = model.build_model(model_name='pidnet', training=False)
 
         # model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
         #                planes=32, ppm_planes=96, head_planes=128, augment=False)
         # model.build((None, *args.image_size, 3))
-        
-
-        
+            
         model.load_weights(args.model_weights, by_name=True)
         # model = tf.keras.models.load_model('./checkpoints/export_path/1/')
 
@@ -59,7 +56,20 @@ if __name__ == '__main__':
         # outputs = model(input_arr)
 
         model.summary()
+
+        export_path = os.path.join('checkpoints', 'export_path', '1')
         
+        os.makedirs(export_path, exist_ok=True)
+
+        tf.keras.models.save_model(
+            model,
+            export_path,
+            overwrite=True,
+            include_optimizer=False,
+            save_format=None,
+            signatures=None,
+            options=None
+        )
         
         print(model)
         #path of the directory where you want to save your model

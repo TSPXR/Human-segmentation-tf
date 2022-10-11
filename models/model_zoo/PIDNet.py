@@ -40,7 +40,6 @@ class PIDNet(object):
         return x
         
     def build(self) -> models.Model:
-        
         x_in = layers.Input(self.input_shape)
 
         # input_shape = tf.keras.backend.int_shape(x_in)
@@ -151,8 +150,8 @@ class PIDNet(object):
             return models.Model(inputs=x_in, outputs=model_outputs)
         else:
             if self.training == False:
-                # x_ = tf.math.argmax(x_, axis=-1)
-                print(self.training)
+                x_ = tf.math.argmax(x_, axis=-1)
+
             return models.Model(inputs=x_in, outputs=x_)
 
 

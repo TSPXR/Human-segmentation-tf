@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size",     type=int,
                     help="Evaluation batch size", default=1)
 parser.add_argument("--num_classes",     type=int,
-                    help="Model num classes", default=1)
+                    help="Model num classes", default=2)
 parser.add_argument("--image_size",     type=tuple,
                     help="Model image size (input resolution)", default=(640, 360))
 parser.add_argument("--video_dir",    type=str,
@@ -21,7 +21,7 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='1010/_1010_pidnet-b16-ep100-lr0.005-bce+dice-adam-640x360-multigpu-binarySeg_best_loss.h5')
+                    help="Saved model weights directory", default='1011/_1011_pidnet-b16-ep100-lr0.005-focal+aux+boundary-adam-640x360-multigpu-semanticSeg_best_loss.h5')
 
 args = parser.parse_args()
 
@@ -48,11 +48,9 @@ if __name__ == '__main__':
     while cv2.waitKey(1) < 0:
         ret, frame = capture.read()
         
-        
-        
         start_t = timeit.default_timer()
         
-        frame = frame[40:40+640, 180:180+360]
+        frame = frame[40:40+640, 360:360+360]
         h, w = frame.shape[:2]
         # print(frame.shape)
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -71,12 +69,14 @@ if __name__ == '__main__':
         
         FPS = int(1./(terminate_t - start_t ))
 
-        output = tf.where(output>=0.5, 1, 0)        
-        output = output[0] * 255
-        # output = tf.expand_dims(output, axis=-1)
+        # output = tf.where(output>=0.9, 1, 0)        
+        
+        output = tf.expand_dims(output, axis=-1)
+        output = output[0]
 
         output = tf.image.resize(output, (h, w), tf.image.ResizeMethod.NEAREST_NEIGHBOR).numpy().astype(np.uint8)
-        # frame *= output
+        frame *= output
+        output = output * 255
         
         cv2.putText(output, 'FPS : {0}'.format(str(FPS)),(50, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
                         (200, 50, 0), 3, cv2.LINE_AA)

@@ -62,7 +62,7 @@ class ModelBuilder(object):
         if model_name == 'pidnet':
             from models.model_zoo.PIDNet import PIDNet
             if training:
-                augment_mode = False
+                augment_mode = True
             else:
                 augment_mode = False
                 

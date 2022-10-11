@@ -3,7 +3,7 @@ from tensorflow.keras import mixed_precision
 from models.model_zoo.pidnet.pidnet import PIDNet
 from models.model_builder import ModelBuilder
 from utils.load_datasets import DatasetGenerator
-from utils.binary_loss import BinaryAuxiliaryLoss, BinaryBoundaryLoss, HumanSegLoss
+from utils.segmentation_loss import BinaryAuxiliaryLoss, BinaryBoundaryLoss, HumanSegLoss
 import os
 import tensorflow as tf
 import tensorflow_addons as tfa
@@ -86,7 +86,7 @@ class ModelConfiguration(DatasetGenerator):
         
         checkpoint_val_iou = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_mse.h5',
                                              monitor=self.metric_name, save_best_only=True, save_weights_only=True,
-                                             verbose=1)
+                                             verbose=1, mode='max')
 
         tensorboard = tf.keras.callbacks.TensorBoard(
             log_dir=self.TENSORBOARD_DIR + 'semantic/' + self.MODEL_PREFIX, write_graph=True, write_images=True)
@@ -158,11 +158,11 @@ class ModelConfiguration(DatasetGenerator):
         self.metric_list = []        
 
         from utils.metrics import MIoU
-        mse_metric = tf.keras.metrics.MeanSquaredError(name='mse')
-        # mIoU = MIoU(self.NUM_CLASSES+1)
-        self.metric_name = 'val_mse'
+        # mse_metric = tf.keras.metrics.MeanSquaredError(name='mse')
+        mIoU = MIoU(self.NUM_CLASSES, name='miou')
+        self.metric_name = 'val_miou'
 
-        self.metric_list.append(mse_metric)
+        self.metric_list.append(mIoU)
 
 
     def train(self):
@@ -177,28 +177,25 @@ class ModelConfiguration(DatasetGenerator):
         self.__configuration_metric()
         self.__set_callbacks()
         
-        main_loss = HumanSegLoss(gamma=2.0, from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
+        main_loss = HumanSegLoss(gamma=2.0, from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES,
                             dataset_name=self.DATASET_NAME, loss_type=self.LOSS_TYPE)
 
-        # boundary_loss = BinaryBoundaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
-        #                     global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
+        boundary_loss = BinaryBoundaryLoss(from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
+                            global_batch_size=self.BATCH_SIZE, num_classes=1)
 
-        auxilary_loss = BinaryAuxiliaryLoss(from_logits=False, use_multi_gpu=self.DISTRIBUTION_MODE,
+        auxilary_loss = BinaryAuxiliaryLoss(from_logits=True, use_multi_gpu=self.DISTRIBUTION_MODE,
                             global_batch_size=self.BATCH_SIZE, num_classes=self.NUM_CLASSES)
 
-        # losses = {
-        #     'main': main_loss,
-        #     # 'aux': auxilary_loss
-        # }
+        losses = {
+            'main': main_loss,
+            'aux': auxilary_loss,
+            'boundary': boundary_loss
+        }
 
-        losses = main_loss
-
-        # metrics = {
-        #     'main': self.metric_list[0]
-        # }
-
-        metrics = self.metric_list[0]
+        metrics = {
+            'main': self.metric_list[0]
+        }
 
         self.model.compile(
             optimizer=self.optimizer,

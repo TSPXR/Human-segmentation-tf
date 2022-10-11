@@ -147,7 +147,7 @@ class DatasetGenerator(DataLoadHandler):
                                     method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
         else:
-            scale = tf.random.uniform([], 0.6, 1.4)
+            scale = tf.random.uniform([], 0.7, 1.3)
             new_h = self.image_size[0] * scale
             new_w = self.image_size[1] * scale
 
@@ -222,6 +222,15 @@ class DatasetGenerator(DataLoadHandler):
         if tf.random.uniform([]) > 0.5:
             img = tf.image.flip_left_right(img)
             labels = tf.image.flip_left_right(labels)
+        if tf.random.uniform([]) > 0.5:
+            # Random rotate
+            upper = 25 * (self.pi/180.0) # Degrees to Radian
+            rand_degree = tf.random.uniform([], minval=0., maxval=upper)
+            img = tfa.image.rotate(img, rand_degree, interpolation='bilinear')
+            labels = tfa.image.rotate(labels, rand_degree, interpolation='nearest')
+
+        
+        labels = tf.cast(labels, dtype=tf.int32)
 
         return (img, labels)
 
@@ -254,6 +263,8 @@ class DatasetGenerator(DataLoadHandler):
         else:
             # Normalize the input image (0 ~ 1)
             img /= 255.
+
+        labels = tf.cast(labels, dtype=tf.int32)
 
         return (img, labels)
 

@@ -40,7 +40,6 @@ class BinaryBoundaryLoss(tf.keras.losses.Loss):
                       global_batch_size=self.global_batch_size, num_classes=self.num_classes)
         return config
 
-
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
         # Calc bce loss                
         edge_map = tf.cast(y_true, dtype=tf.float32)
@@ -52,7 +51,7 @@ class BinaryBoundaryLoss(tf.keras.losses.Loss):
         edge = tf.sqrt(grad_mag_square)
         edge = tf.cast(tf.where(edge>=0.1, 1., 0.), dtype=tf.float32)
 
-        loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=edge, y_pred=y_pred)
+        loss = tf.keras.losses.BinaryFocalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=edge, y_pred=y_pred)
 
         # Reduce loss to scalar
         if self.use_multi_gpu:
@@ -100,7 +99,7 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
-        loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+        loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
         
         if self.use_multi_gpu:
             loss = tf.reduce_mean(loss)
@@ -160,33 +159,33 @@ class HumanSegLoss(tf.keras.losses.Loss):
 
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
-        # BCE loss
-        bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
+        # # BCE loss
+        # bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
 
-        if self.use_multi_gpu:
-            bce_loss = tf.reduce_mean(bce_loss)
+        # if self.use_multi_gpu:
+        #     bce_loss = tf.reduce_mean(bce_loss)
 
-        # Dice loss
-        y_true_f = tf.keras.backend.flatten(y_true)
-        y_pred_f = tf.keras.backend.flatten(y_pred)
-        intersection = tf.keras.backend.sum(y_true_f * y_pred_f)
-        dice = (2. * intersection + 100) / (tf.keras.backend.sum(y_true_f) + tf.keras.backend.sum(y_pred_f) + 100)
-        dice_loss = 1 - dice
+        # # Dice loss
+        # y_true_f = tf.keras.backend.flatten(y_true)
+        # y_pred_f = tf.keras.backend.flatten(y_pred)
+        # intersection = tf.keras.backend.sum(y_true_f * y_pred_f)
+        # dice = (2. * intersection + 100) / (tf.keras.backend.sum(y_true_f) + tf.keras.backend.sum(y_pred_f) + 100)
+        # dice_loss = 1 - dice
 
-        if self.use_multi_gpu:
-            dice_loss = dice_loss * (1. / self.global_batch_size)
+        # if self.use_multi_gpu:
+        #     dice_loss = dice_loss * (1. / self.global_batch_size)
 
-        loss = (dice_loss * 0.5) + (bce_loss * 0.5)
+        # loss = (dice_loss * 0.5) + (bce_loss * 0.5)
 
         # Semantic loss
         # loss = self.sparse_categorical_focal_loss(y_true=y_true, y_pred=y_pred, gamma=self.gamma, from_logits=self.from_logits)
-        # loss = self.sparse_categorical_cross_entropy(y_true=y_true, y_pred=y_pred)
+        loss = self.sparse_categorical_cross_entropy(y_true=y_true, y_pred=y_pred)
 
         return loss
 
 
     def sparse_categorical_cross_entropy(self, y_true, y_pred):
-        loss = losses.SparseCategoricalCrossentropy(
+        loss = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
              
         if self.use_multi_gpu:
@@ -247,7 +246,7 @@ class HumanSegLoss(tf.keras.losses.Loss):
             logits = tf.math.log(tf.clip_by_value(y_pred, _EPSILON, 1 - _EPSILON))
         
         xent_loss = losses.SparseCategoricalCrossentropy(
-            from_logits=True,
+            from_logits=from_logits,
             reduction=self.loss_reduction)(y_true=y_true, y_pred=logits)
 
         y_true_rank = y_true.shape.rank
