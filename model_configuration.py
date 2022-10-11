@@ -120,6 +120,8 @@ class ModelConfiguration(DatasetGenerator):
                                                           self.number_train / (self.BATCH_SIZE / self.EPOCHS)),
                                                           warmup_proportion=0.1,
                                                           min_lr=0.0001)
+        elif self.OPTIMIZER_TYPE == 'adamW':
+            self.optimizer = tf.keras.optimizers.experimental.AdamW(learning_rate=self.INIT_LR, weight_decay=0.0001)
             
         if self.MIXED_PRECISION:
             # Wrapping optimizer when use distribute training (multi-gpu training)
