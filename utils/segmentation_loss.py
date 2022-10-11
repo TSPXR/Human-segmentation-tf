@@ -9,7 +9,7 @@ _EPSILON = tf.keras.backend.epsilon()
 class BinaryBoundaryLoss(tf.keras.losses.Loss):
     def __init__(self, from_logits: bool = False, use_multi_gpu: bool = False,
                  global_batch_size: int = 16, num_classes: int = 1,
-                 boundary_alpha: float = 20., **kwargs):
+                 boundary_alpha: float = 2., **kwargs):
         """
         Args:
             BoundaryLoss is the sum of semantic segmentation loss.

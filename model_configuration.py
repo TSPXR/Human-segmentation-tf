@@ -160,7 +160,7 @@ class ModelConfiguration(DatasetGenerator):
         from utils.metrics import MIoU
         # mse_metric = tf.keras.metrics.MeanSquaredError(name='mse')
         mIoU = MIoU(self.NUM_CLASSES, name='miou')
-        self.metric_name = 'val_miou'
+        self.metric_name = 'val_main_miou'
 
         self.metric_list.append(mIoU)
 
