@@ -69,10 +69,10 @@ class ModelBuilder(object):
             # m=2, n=3 planes=32, ppm_planes=96, head_planes=128
             # test lightweight value
             # m=2, n=3 planes=24, ppm_planes=64, head_planes=96 and resolution 640x360
-            # model = PIDNet(input_shape=(*self.image_size, 3), m=2, n=3, num_classes=self.num_classes,
-            #                planes=24, ppm_planes=64, head_planes=96, augment=augment_mode, training=training).build()
             model = PIDNet(input_shape=(*self.image_size, 3), m=2, n=3, num_classes=self.num_classes,
-                           planes=32, ppm_planes=96, head_planes=128, augment=augment_mode, training=training).build()
+                           planes=24, ppm_planes=64, head_planes=96, augment=augment_mode, training=training).build()
+            # model = PIDNet(input_shape=(*self.image_size, 3), m=2, n=3, num_classes=self.num_classes,
+            #                planes=32, ppm_planes=96, head_planes=128, augment=augment_mode, training=training).build()
                            
 
         elif model_name == 'ddrnet':
