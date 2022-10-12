@@ -21,7 +21,7 @@ parser.add_argument("--video_result_dir", type=str,
 parser.add_argument("--checkpoint_dir", type=str,
                     help="Setting the model storage directory", default='./checkpoints/')
 parser.add_argument("--weight_name", type=str,
-                    help="Saved model weights directory", default='1011/_1011_pidnet-b16-ep100-lr0.005-focal+aux+boundary-adam-640x360-multigpu-semanticSeg_best_loss.h5')
+                    help="Saved model weights directory", default='1011/_1011_pidnet-b16-ep100-lr0.005-ce2+aux0.4+boundary2-adam-640x360-multigpu-semanticSeg_best_loss.h5')
 
 args = parser.parse_args()
 

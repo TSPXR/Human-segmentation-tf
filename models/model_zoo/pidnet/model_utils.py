@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
-bn_mom = 0.1
+bn_mom = 0.9
 # pytorch bn_mom = 0.1 -> tensorflow bn_mom = 0.9
 
 

@@ -22,11 +22,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_dir",   type=str,    help="Set the model storage directory",
                     default='./checkpoints/')
 parser.add_argument("--model_weights", type=str,     help="Saved model weights directory",
-                    default='./checkpoints/1011/_1011_pidnet-b16-ep100-lr0.005-focal+aux+boundary-adam-256x256-multigpu-semanticSeg_best_loss.h5')
+                    default='./checkpoints/1011/_1011_pidnet-b16-ep100-lr0.005-ce2+aux0.4+boundary2-adam-640x360-multigpu-semanticSeg_best_loss.h5')
 parser.add_argument("--num_classes",          type=int,    help="Set num classes for model and post-processing",
                     default=2)  
 parser.add_argument("--image_size",          type=tuple,    help="Set image size for priors and post-processing",
-                    default=(256, 256))
+                    default=(640, 360))
 parser.add_argument("--gpu_num",          type=int,    help="Set GPU number to use(When without distribute training)",
                     default=0)
 parser.add_argument("--frozen_dir",   type=str,    help="Path to save frozen graph transformation result",
@@ -44,21 +44,11 @@ if __name__ == '__main__':
         model = ModelBuilder(image_size=args.image_size,
                                   num_classes=args.num_classes, use_weight_decay=False, weight_decay=0)
         model = model.build_model(model_name='pidnet', training=False)
-
-        # model = PIDNet(input_shape=(*args.image_size, 3), m=2, n=3, num_classes=args.num_classes,
-        #                planes=32, ppm_planes=96, head_planes=128, augment=False)
-        # model.build((None, *args.image_size, 3))
             
         model.load_weights(args.model_weights, by_name=True)
-        # model = tf.keras.models.load_model('./checkpoints/export_path/1/')
-
-        # input_arr = tf.random.uniform((1, *args.image_size, 3))
-        # outputs = model(input_arr)
-
         model.summary()
 
         export_path = os.path.join('checkpoints', 'export_path', '1')
-        
         os.makedirs(export_path, exist_ok=True)
 
         tf.keras.models.save_model(

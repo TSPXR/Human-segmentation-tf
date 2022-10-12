@@ -12,7 +12,7 @@ def conv3x3(out_planes, stride=1):
 Creates a residual block with two 3*3 conv's
 """
 basicblock_expansion = 1
-bn_mom = 0.1
+bn_mom = 0.9
 def basic_block(x_in, planes, stride=1, downsample=None, no_relu=False, prefix='layer_name'):
     residual = x_in
 

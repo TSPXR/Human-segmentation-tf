@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-bn_momentum = 0.1
+bn_momentum = 0.9
 
 
 class PIDNet(tf.keras.models.Model):

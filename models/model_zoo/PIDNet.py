@@ -4,7 +4,7 @@ import tensorflow.keras.models as models
 from .pidnet.resnet import basic_block, bottleneck_block, basicblock_expansion, bottleneck_expansion
 from .pidnet.model_utils import segmentation_head, DAPPPM, PAPPM, PagFM, Bag, Light_Bag
 
-bn_mom = 0.1
+bn_mom = 0.9
 
 class PIDNet(object):
     def __init__(self, input_shape=(640, 360, 3), m=2,
@@ -150,6 +150,7 @@ class PIDNet(object):
             return models.Model(inputs=x_in, outputs=model_outputs)
         else:
             if self.training == False:
+                x_ = tf.nn.softmax(x_)
                 x_ = tf.math.argmax(x_, axis=-1)
 
             return models.Model(inputs=x_in, outputs=x_)

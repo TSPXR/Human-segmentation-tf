@@ -222,14 +222,28 @@ class DatasetGenerator(DataLoadHandler):
         if tf.random.uniform([]) > 0.5:
             img = tf.image.flip_left_right(img)
             labels = tf.image.flip_left_right(labels)
-        if tf.random.uniform([]) > 0.5:
+        if tf.random.uniform([]) > 0.2:
             # Random rotate
             upper = 25 * (self.pi/180.0) # Degrees to Radian
             rand_degree = tf.random.uniform([], minval=0., maxval=upper)
             img = tfa.image.rotate(img, rand_degree, interpolation='bilinear')
             labels = tfa.image.rotate(labels, rand_degree, interpolation='nearest')
 
-        
+        if tf.random.uniform([]) > 0.2:
+            shift_x_max = self.image_size[1] / 2
+            shift_y_max = self.image_size[0] / 3
+            max_x = tf.random.uniform([], minval=0., maxval=shift_x_max)
+            max_y = tf.random.uniform([], minval=0., maxval=shift_y_max)
+            max_x = tf.cast(max_x, dtype=tf.int32)
+            max_y = tf.cast(max_y, dtype=tf.int32)
+            if tf.random.uniform([]) > 0.5:
+                max_x *= -1
+            img = tfa.image.translate_xy(image=img, translate_to=[max_x, max_y], replace=0)
+            labels = tf.concat([labels, labels, labels], axis=-1)
+            labels = tfa.image.translate_xy(image=labels, translate_to=[max_x, max_y], replace=0)
+            labels = labels[:, :, 0]
+            labels = tf.expand_dims(labels, axis=-1)
+
         labels = tf.cast(labels, dtype=tf.int32)
 
         return (img, labels)

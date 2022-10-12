@@ -32,11 +32,11 @@ parser.add_argument('--saved_model_path', type=str,   help='Saved model weight p
 # Set Training Options
 # Multi-adam-b16-e150-lr0.005-focal2.0-augment-boundary20_aux0.4-weightDecay
 parser.add_argument('--model_prefix',     type=str,    help='Model name',
-                    default='light_pidnet-b16-ep50-lr0.001-ce2+aux0.4+boundary2-adam-640x360-singleGpu-semanticSeg')
+                    default='pidnet-b16-ep100-lr0.001-ce2+aux0.4+boundary2-adam-640x360-singleGpu-semanticSeg-shift_aug_bn0.9')
 parser.add_argument('--batch_size',       type=int,    help='Batch size per each GPU',
                     default=16)
 parser.add_argument('--epoch',            type=int,    help='Training epochs',
-                    default=50)
+                    default=100)
 parser.add_argument('--lr',               type=float,  help='Initial learning rate',
                     default=0.001)
 parser.add_argument('--weight_decay',     type=float,  help='Set Weight Decay',
@@ -62,7 +62,7 @@ parser.add_argument('--loss_type',        type=str,    help='Set Train loss func
 parser.add_argument('--optimizer',        type=str,    help='Set optimizer',
                     default='adam')
 parser.add_argument('--use_weightDecay',  type=bool,   help='Whether to use weightDecay',
-                    default=True)
+                    default=False)
 parser.add_argument('--mixed_precision',  type=bool,   help='Whether to use mixed_precision',
                     default=True)
 parser.add_argument('--model_name',       type=str,    help='Set the model name to save',

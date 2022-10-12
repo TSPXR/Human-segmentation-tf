@@ -84,7 +84,7 @@ class ModelConfiguration(DatasetGenerator):
         checkpoint_val_loss = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_loss.h5',
                                               monitor='val_loss', save_best_only=True, save_weights_only=True, verbose=1)
         
-        checkpoint_val_iou = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_mse.h5',
+        checkpoint_val_iou = ModelCheckpoint(self.CHECKPOINT_DIR + self.args.model_name + '/_' + self.SAVE_MODEL_NAME + '_best_miou.h5',
                                              monitor=self.metric_name, save_best_only=True, save_weights_only=True,
                                              verbose=1, mode='max')
 

@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 
 
-bn_momentum = 0.1
+bn_momentum = 0.9
 
 class BasicBlock(tf.keras.layers.Layer):
     
