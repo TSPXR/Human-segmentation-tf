@@ -7,7 +7,7 @@ import argparse
 import natsort
 import random
 
-name = 'yebin_fashion_dataset'
+name = 'matting_human_dataset'
 max_aug = 3
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/select/rgb/'.format(name))
@@ -193,6 +193,81 @@ if __name__ == '__main__':
             max_dx = int(w/2)
             max_dy = int(h/1.7)
 
+            """compose background image with multiple objects"""
+            # 1. select background
+            bg_rnd_idx = random.randint(0, len(bg_list)-1)
+            original_bg = cv2.imread(bg_list[bg_rnd_idx])
+            original_bg = image_loader.resize_bg_image(bg_image=original_bg, rgb_shape=(1440, 810, 3)) # for matting_dataset
+            # 합성용 background image, mask 생성
+            bg_image = original_bg.copy()
+            
+            compose_mask = np.zeros((1440, 810, 3))
+
+            # 2. load multiple objects
+            # center 
+            # rgb_rnd_idx = random.randint(0, rgb_len-1)
+            # rnd_rgb = cv2.imread(rgb_list[rgb_rnd_idx]) # shape = 800, 600 ,3 
+            # rnd_mask = cv2.imread(mask_list[rgb_rnd_idx]) # shape = 800, 600 ,3 
+            # rnd_mask = np.where(rnd_mask>=1, 1, 0)
+            # zero_rgb = np.zeros((1440, 810, 3))
+            # zero_mask = np.zeros((1440, 810, 3))
+            # zero_rgb[240:240+800, 105:105+600] = rnd_rgb
+            # zero_mask[240:240+800, 105:105+600] += rnd_mask
+            # compose_mask[240:240+800, 105:105+600] += rnd_mask
+            # bg_image = np.where(zero_mask >= 1, zero_rgb, original_bg)
+            # bg_image = bg_image.astype(np.uint8)
+
+            # left
+            rgb_rnd_idx = random.randint(0, rgb_len-1)
+            rnd_rgb = cv2.imread(rgb_list[rgb_rnd_idx]) # shape = 800, 600 ,3
+            rgb_darker_factor = random.random()
+            if rgb_darker_factor <= 0.5:
+                rgb_darker_factor = 0.5
+            rnd_rgb = (rnd_rgb * rgb_darker_factor).astype(np.uint8)
+            rnd_mask = cv2.imread(mask_list[rgb_rnd_idx]) # shape = 800, 600 ,3 
+            rnd_mask = np.where(rnd_mask>=1, 1, 0)
+            zero_rgb = np.zeros((1440, 810, 3))
+            zero_mask = np.zeros((1440, 810, 3))
+            zero_rgb[640:640+800, 0:0+600] = rnd_rgb
+            zero_mask[640:640+800, 0:0+600] += rnd_mask
+            compose_mask[640:640+800, 0:0+600] += rnd_mask
+            zero_rgb = zero_rgb.astype(np.uint8)
+            bg_image = np.where(zero_mask >= 1, zero_rgb, original_bg)
+            bg_image = bg_image.astype(np.uint8)
+
+            # right
+            rgb_rnd_idx = random.randint(0, rgb_len-1)
+            rnd_rgb = cv2.imread(rgb_list[rgb_rnd_idx]) # shape = 800, 600 ,3 
+            rgb_darker_factor = random.random()
+            if rgb_darker_factor <= 0.5:
+                rgb_darker_factor = 0.5
+            rnd_rgb = (rnd_rgb * rgb_darker_factor).astype(np.uint8)
+            rnd_mask = cv2.imread(mask_list[rgb_rnd_idx]) # shape = 800, 600 ,3 
+            rnd_mask = np.where(rnd_mask>=1, 1, 0)
+            zero_rgb = np.zeros((1440, 810, 3))
+            zero_mask = np.zeros((1440, 810, 3))
+            zero_rgb[640:640+800, 210:210+600] = rnd_rgb
+            zero_mask[640:640+800, 210:210+600] += rnd_mask
+            compose_mask[640:640+800, 210:210+600] += rnd_mask
+            zero_rgb = zero_rgb.astype(np.uint8)
+            bg_image = np.where(zero_mask >= 1, zero_rgb, bg_image)
+
+            output_mask = np.where(compose_mask >= 1, 255, 0)
+            bg_image = bg_image.astype(np.uint8)
+            output_mask = output_mask.astype(np.uint8)
+            bg_image = cv2.resize(bg_image, (540, 960))
+            output_mask = cv2.resize(output_mask, (540, 960), cv2.INTER_NEAREST)
+
+            image_loader.save_images(rgb=bg_image, mask=output_mask, prefix='{0}_idx_{1}_multiple_objects'.format(name, idx))
+
+            # masked_image = bg_image * (output_mask / 255)
+            # masked_image = masked_image.astype(np.uint8)
+            # concat_img = cv2.hconcat([bg_image, output_mask, masked_image]) # original_rgb * (original_mask/255)
+            # cv2.imshow('test', concat_img)
+            # cv2.waitKey(0)
+            
+
+
             # """2. change augmented bg (color aug + rgb shift)"""
             # # random shift original rgb and mask
             for compose_aug in range(max_aug):
@@ -210,7 +285,7 @@ if __name__ == '__main__':
 
                 rgb_darker_factor = random.random()
                 if rgb_darker_factor <= 0.7:
-                    rgb_darker_factor = 0.7
+                    rgb_darker_factor = 0.8
                 sift_rgb = (sift_rgb * rgb_darker_factor).astype(np.uint8)
 
                 # resize bg img
