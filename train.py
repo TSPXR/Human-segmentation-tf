@@ -32,11 +32,11 @@ parser.add_argument('--saved_model_path', type=str,   help='Saved model weight p
 # Set Training Options
 # Multi-adam-b16-e150-lr0.005-focal2.0-augment-boundary20_aux0.4-weightDecay
 parser.add_argument('--model_prefix',     type=str,    help='Model name',
-                    default='pidnet-b16-ep100-lr0.001-ce2+aux0.4+boundary2-adam-640x360-singleGpu-semanticSeg-shift_aug_bn0.9')
+                    default='pidnet-b16-ep50-lr0.001-ce2+aux0.4+boundary2-adam-640x360-singleGpu-semanticSeg-shift_aug_bn0.9')
 parser.add_argument('--batch_size',       type=int,    help='Batch size per each GPU',
                     default=16)
 parser.add_argument('--epoch',            type=int,    help='Training epochs',
-                    default=100)
+                    default=50)
 parser.add_argument('--lr',               type=float,  help='Initial learning rate',
                     default=0.001)
 parser.add_argument('--weight_decay',     type=float,  help='Set Weight Decay',
@@ -44,7 +44,7 @@ parser.add_argument('--weight_decay',     type=float,  help='Set Weight Decay',
 parser.add_argument('--num_classes',      type=int,    help='Set number of classes to classification(BG+FG)',
                     default=2)
 parser.add_argument('--image_size',       type=tuple,  help='Set network input size',
-                    default=(384, 216))
+                    default=(640, 360))
 parser.add_argument('--network_name',     type=str,    help='Select segmentation network\
                                                             |   network_name    : description | \
                                                             [ 1. pidnet       : A Real-time Semantic Segmentation Network\

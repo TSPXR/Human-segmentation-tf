@@ -32,7 +32,8 @@ class BinaryBoundaryLoss(tf.keras.losses.Loss):
         if self.use_multi_gpu:
             self.loss_reduction = losses.Reduction.NONE
         else:
-            self.loss_reduction = losses.Reduction.AUTO
+            # self.loss_reduction = losses.Reduction.AUTO
+            self.loss_reduction = losses.Reduction.NONE
 
     def get_config(self):
         config = super().get_config()
@@ -54,8 +55,8 @@ class BinaryBoundaryLoss(tf.keras.losses.Loss):
         loss = tf.keras.losses.BinaryFocalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=edge, y_pred=y_pred)
 
         # Reduce loss to scalar
-        if self.use_multi_gpu:
-            loss = tf.reduce_mean(loss)
+        # if self.use_multi_gpu:
+        loss = tf.reduce_mean(loss)
         
         loss *= self.boundary_alpha
         return loss
@@ -89,7 +90,8 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
         if self.use_multi_gpu:
             self.loss_reduction = losses.Reduction.NONE
         else:
-            self.loss_reduction = losses.Reduction.AUTO
+            # self.loss_reduction = losses.Reduction.AUTO
+            self.loss_reduction = losses.Reduction.NONE
 
     def get_config(self):
         config = super().get_config()
@@ -101,8 +103,8 @@ class BinaryAuxiliaryLoss(tf.keras.losses.Loss):
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor):
         loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=self.from_logits, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
         
-        if self.use_multi_gpu:
-            loss = tf.reduce_mean(loss)
+        # if self.use_multi_gpu:
+        loss = tf.reduce_mean(loss)
 
         loss *= self.aux_alpha
         return loss
@@ -147,7 +149,8 @@ class HumanSegLoss(tf.keras.losses.Loss):
         if self.use_multi_gpu:
             self.loss_reduction = losses.Reduction.NONE
         else:
-            self.loss_reduction = losses.Reduction.AUTO
+            # self.loss_reduction = losses.Reduction.AUTO
+            self.loss_reduction = losses.Reduction.NONE
 
 
     def get_config(self):
@@ -188,8 +191,8 @@ class HumanSegLoss(tf.keras.losses.Loss):
         loss = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction=self.loss_reduction)(y_true=y_true, y_pred=y_pred)
              
-        if self.use_multi_gpu:
-            loss = tf.reduce_mean(loss)
+        # if self.use_multi_gpu:
+        loss = tf.reduce_mean(loss)
         
         return loss
         

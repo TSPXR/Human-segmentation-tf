@@ -8,12 +8,12 @@ import natsort
 import random
 import albumentations as A
 
-name = 'pp_human_dataset'
+name = 'foreground'
 max_aug = 3
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/select/rgb/'.format(name))
 parser.add_argument("--mask_path",     type=str,   help="raw mask path", default='./raw_data/raw_datasets/{0}/select/gt/'.format(name))
-parser.add_argument("--bg_path",     type=str,   help="bg image path, Convert raw rgb image using mask area", default='./raw_data/raw_datasets/bg_img/save_bg/rgb/')
+parser.add_argument("--bg_path",     type=str,   help="bg image path, Convert raw rgb image using mask area", default='./raw_data/raw_datasets/bg_img/new_bg/select/rgb/')
 parser.add_argument("--output_path",     type=str,   help="Path to save the conversion result", default='./raw_data/raw_datasets/{0}/augmented/'.format(name))
 
 args = parser.parse_args()
@@ -129,8 +129,6 @@ class ImageAugmentationLoader():
         if random_axis == 1:
             random_dx *= -1
 
-
-
         # if tf.random.uniform([]) > 0.5:
         #     random_dy *= -1
 
@@ -188,44 +186,41 @@ if __name__ == '__main__':
 
     # for idx in range(len(rgb_list)):
     for idx in tqdm(range(len(rgb_list)), total=len(rgb_list)):
-        original_rgb = cv2.imread(rgb_list[idx])
-        
-        original_mask = cv2.imread(mask_list[idx])
-        
-        original_rgb_shape = original_rgb.shape[:2]
-        original_mask_shape = original_mask.shape[:2]
+        random_select = random.randint(0, 4)
+        if random_select == 0:
+            original_rgb = cv2.imread(rgb_list[idx])
+            original_mask = cv2.imread(mask_list[idx])
+            
+            original_rgb_shape = original_rgb.shape[:2]
+            original_mask_shape = original_mask.shape[:2]
 
-        if original_rgb_shape != original_mask_shape:
-            print('not match shape!  resize mask to rgb shape')
+            if original_rgb_shape != original_mask_shape:
+                print('not match shape!  resize mask to rgb shape')
+                h, w = original_rgb_shape
+                original_mask = cv2.resize(original_mask, (w, h), interpolation=cv2.INTER_NEAREST)
+            
+            # random shift
             h, w = original_rgb_shape
-            original_mask = cv2.resize(original_mask, (w, h), interpolation=cv2.INTER_NEAREST)
-        
-        # random shift
-        h, w = original_rgb_shape
-        max_dx = int(w/2)
-        max_dy = int(h/1.7)
+            max_dx = int(w/2)
+            max_dy = int(h/1.7)
 
-        # """2. change augmented bg (color aug + rgb shift)"""
-        # # random shift original rgb and mask
-        for compose_aug in range(max_aug):
-            sift_rgb, sift_mask = image_loader.image_random_translation(rgb=original_rgb.copy(), mask=original_mask.copy(), min_dx=0, min_dy=0, max_dx=max_dx, max_dy=max_dy)
+            # """2. change augmented bg (color aug + rgb shift)"""
+            # # random shift original rgb and mask
+            for compose_aug in range(max_aug):
+                sift_rgb = original_rgb.copy()
+                sift_mask = original_mask.copy()
+                # get random background idx
+                bg_rnd_idx = random.randint(0, len(bg_list)-1)
+                # load bg img
+                original_bg = cv2.imread(bg_list[bg_rnd_idx])
+                # resize bg img
+                bg_image = image_loader.resize_bg_image(bg_image=original_bg, rgb_shape=original_rgb.shape)
+                
+                bg_img_whitout_rgb = np.where(
+                            sift_mask == 255, 0, bg_image)
 
-            # get random background idx
-            bg_rnd_idx = random.randint(0, len(bg_list)-1)
-            # load bg img
-            original_bg = cv2.imread(bg_list[bg_rnd_idx])
-            # resize bg img
-            bg_image = image_loader.resize_bg_image(bg_image=original_bg, rgb_shape=original_rgb.shape)
-            
-            # bg image color augment
-            transformed = bg_aug(image=bg_image.copy())
-            bg_aug_rgb = transformed['image']
-            
-            bg_img_whitout_rgb = np.where(
-                        sift_mask == 255, 0, bg_aug_rgb)
+                rgb_img_only_object = np.where(sift_mask == 255, sift_rgb, 0)
 
-            rgb_img_only_object = np.where(sift_mask == 255, sift_rgb, 0)
+                compose_aug_rgb = cv2.add(bg_img_whitout_rgb, rgb_img_only_object)
 
-            compose_aug_rgb = cv2.add(bg_img_whitout_rgb, rgb_img_only_object)
-
-            image_loader.save_images(rgb=compose_aug_rgb, mask=sift_mask.copy(), prefix='{0}_idx_{1}_{2}_change_bg_augmented'.format(name, idx, compose_aug))
+                image_loader.save_images(rgb=compose_aug_rgb, mask=sift_mask.copy(), prefix='{0}_idx_{1}_{2}_change_bg_augmented'.format(name, idx, compose_aug))

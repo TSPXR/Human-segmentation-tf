@@ -5,7 +5,7 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-name = 'remove_human_nyu'
+name = 'new_bg'
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/bg_img/{0}/rgb/'.format(name))
 parser.add_argument("--output_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/bg_img/{0}/select/'.format(name))
 
