@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--checkpoint_dir",   type=str,    help="Set the model storage directory",
                     default='./checkpoints/')
 parser.add_argument("--model_weights", type=str,     help="Saved model weights directory",
-                    default='./checkpoints/1011/_1011_pidnet-b16-ep100-lr0.005-ce2+aux0.4+boundary2-adam-640x360-multigpu-semanticSeg_best_loss.h5')
+                    default='./checkpoints/1014/_1014_pidnet-b16-ep30-lr0.001-ce2+aux0.4+boundary2-adam-640x360-singleGpu-semanticSeg-shift_aug_bn0.9-single_best_loss.h5')
 parser.add_argument("--num_classes",          type=int,    help="Set num classes for model and post-processing",
                     default=2)  
 parser.add_argument("--image_size",          type=tuple,    help="Set image size for priors and post-processing",
