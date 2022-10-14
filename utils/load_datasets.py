@@ -238,8 +238,8 @@ class DatasetGenerator(DataLoadHandler):
             max_y = tf.cast(max_y, dtype=tf.int32)
             if tf.random.uniform([]) > 0.5:
                 max_x *= -1
-            if tf.random.uniform([]) > 0.5:
-                max_y *= -1
+            # if tf.random.uniform([]) > 0.5:
+            #     max_y *= -1
             img = tfa.image.translate_xy(image=img, translate_to=[max_x, max_y], replace=0)
             labels = tf.concat([labels, labels, labels], axis=-1)
             labels = tfa.image.translate_xy(image=labels, translate_to=[max_x, max_y], replace=0)

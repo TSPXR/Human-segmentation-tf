@@ -5,7 +5,7 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-name = 'new_bg'
+name = 'coex_second_bg'
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/bg_img/{0}/rgb/'.format(name))
 parser.add_argument("--output_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/bg_img/{0}/select/'.format(name))
 

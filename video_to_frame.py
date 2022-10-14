@@ -24,7 +24,7 @@ if __name__ == '__main__':
     os.makedirs(args.video_result_dir, exist_ok=True)
 
     print(video_list)
-
+    frame_idx = 0
     for video_idx, video_file in enumerate(video_list):
         video_idx += 1
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
         # Get camera FPS
         fps = cap.get(cv2.CAP_PROP_FPS)
-        fps = 30
+        fps = 10
         # Frame width size
         frameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         # Frame height size
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         print('frame_size={0}'.format(frame_size))
         
 
-        frame_idx = 0
+        
         while True:
             print(frame_idx)
             retval, frame = cap.read()
@@ -57,8 +57,8 @@ if __name__ == '__main__':
             
             original_frame_shape = frame.shape
 
-            
-            cv2.imwrite('./datasets/new_bg/video_frame/' + str(frame_idx) + 'coex_bg_rgb.jpg', frame)
+            frame = cv2.flip(frame, 0)
+            cv2.imwrite('./datasets/new_bg/video_frame/' + str(frame_idx) + '_second_coex_bg_rgb.jpg', frame)
 
 
         if cap.isOpened():

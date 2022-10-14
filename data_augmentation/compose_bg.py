@@ -12,7 +12,7 @@ max_aug = 3
 parser = argparse.ArgumentParser()
 parser.add_argument("--rgb_path",     type=str,   help="raw image path", default='./raw_data/raw_datasets/{0}/select/rgb/'.format(name))
 parser.add_argument("--mask_path",     type=str,   help="raw mask path", default='./raw_data/raw_datasets/{0}/select/gt/'.format(name))
-parser.add_argument("--bg_path",     type=str,   help="bg image path, Convert raw rgb image using mask area", default='./raw_data/raw_datasets/coex_bg/select/rgb/')
+parser.add_argument("--bg_path",     type=str,   help="bg image path, Convert raw rgb image using mask area", default='./raw_data/raw_datasets/coex_second_bg/select/rgb/')
 parser.add_argument("--output_path",     type=str,   help="Path to save the conversion result", default='./raw_data/raw_datasets/{0}/augmented/'.format(name))
 
 args = parser.parse_args()
@@ -190,7 +190,7 @@ if __name__ == '__main__':
             
             # random shiftq
             h, w = original_rgb_shape
-            max_dx = int(w/2)
+            max_dx = int(w/3)
             max_dy = int(h/1.7)
 
             # """2. change augmented bg (color aug + rgb shift)"""
@@ -198,6 +198,8 @@ if __name__ == '__main__':
             for compose_aug in range(max_aug):
                 sift_rgb = original_rgb.copy()
                 sift_mask = original_mask.copy()
+
+                sift_rgb , sift_mask = image_loader.image_random_translation(rgb=sift_rgb, mask=sift_mask, min_dx=0, min_dy=0, max_dx=max_dx, max_dy=max_dy)
                 # get random background idx
                 bg_rnd_idx = random.randint(0, len(bg_list)-1)
                 # load bg img
