@@ -147,43 +147,22 @@ class DatasetGenerator(DataLoadHandler):
                                     method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
         else:
-            scale = tf.random.uniform([], 0.7, 1.3)
+            scale = tf.random.uniform([], 1.05, 1.4)
             new_h = self.image_size[0] * scale
             new_w = self.image_size[1] * scale
 
-            if scale < 1.0:
+            img = tf.image.resize(img, size=(new_h, new_w),
+                            method=tf.image.ResizeMethod.BILINEAR)
+            labels = tf.image.resize(labels, size=(new_h, new_w),
+                                method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-                img = tf.image.resize(img, size=(self.image_size[0], self.image_size[1]),
-                                method=tf.image.ResizeMethod.BILINEAR)
-                labels = tf.image.resize(labels, size=(self.image_size[0], self.image_size[1]),
-                                    method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+            concat_img = tf.concat([img, labels], axis=-1)
+            concat_img = tf.image.random_crop(
+            concat_img, (self.image_size[0], self.image_size[1], 4))
 
-                concat_img = tf.concat([img, labels], axis=-1)
-                concat_img = tf.image.random_crop(
-                concat_img, (new_h, new_w, 4))
-
-                img = concat_img[:, :, :3]
-                labels = concat_img[:, :, 3:]
-
-                img = tf.image.resize(img, size=(self.image_size[0], self.image_size[1]),
-                                method=tf.image.ResizeMethod.BILINEAR)
-                labels = tf.image.resize(labels, size=(self.image_size[0], self.image_size[1]),
-                                    method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+            img = concat_img[:, :, :3]
+            labels = concat_img[:, :, 3:]
             
-
-            else:
-                img = tf.image.resize(img, size=(new_h, new_w),
-                                    method=tf.image.ResizeMethod.BILINEAR)
-                labels = tf.image.resize(labels, size=(new_h, new_w),
-                                        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-
-                concat_img = tf.concat([img, labels], axis=-1)
-                concat_img = tf.image.random_crop(
-                    concat_img, (self.image_size[0], self.image_size[1], 4))
-
-                img = concat_img[:, :, :3]
-                labels = concat_img[:, :, 3:]
-
         # Input image normalization
         if self.norm_type == 'tf':
             # Normalize the input image to 'tf' style (-1 ~ 1)
@@ -230,8 +209,8 @@ class DatasetGenerator(DataLoadHandler):
         #     labels = tfa.image.rotate(labels, rand_degree, interpolation='nearest')
 
         if tf.random.uniform([]) > 0.1:
-            shift_x_max = self.image_size[1] / 3
-            shift_y_max = self.image_size[0] / 4
+            shift_x_max = self.image_size[1] / 2.5
+            shift_y_max = self.image_size[0] / 3.5
             max_x = tf.random.uniform([], minval=0., maxval=shift_x_max)
             max_y = tf.random.uniform([], minval=0., maxval=shift_y_max)
             max_x = tf.cast(max_x, dtype=tf.int32)
